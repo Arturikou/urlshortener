@@ -1,0 +1,176 @@
+package handlers_test
+
+import (
+	"errors"
+	"github.com/Arturikou/urlshortener/internal/handlers"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+)
+
+type URLServiceMock struct {
+	mock.Mock
+}
+
+func (m *URLServiceMock) AddURL(url string) (string, error) {
+	args := m.Called(url)
+	return args.String(0), args.Error(1)
+}
+
+func (m *URLServiceMock) GetURL(id string) (string, error) {
+	args := m.Called(id)
+	return args.String(0), args.Error(1)
+}
+
+func TestHandlers_AddURL(t *testing.T) {
+	type mockData struct {
+		returnID  string
+		returnErr error
+	}
+
+	type want struct {
+		code        int
+		response    string
+		contentType string
+	}
+
+	tests := []struct {
+		name string
+		body string
+		mock mockData
+		want want
+	}{
+		{
+			name: "Success",
+			body: "https://practicum.yandex.ru",
+			mock: mockData{
+				returnID:  "EwHXdJfB",
+				returnErr: nil,
+			},
+			want: want{
+				code:        http.StatusCreated,
+				response:    "http://localhost:8080/EwHXdJfB",
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Empty body",
+			body: "",
+			mock: mockData{
+				returnID:  "EwHXdJfB",
+				returnErr: nil,
+			},
+			want: want{
+				code:        http.StatusBadRequest,
+				response:    "empty body",
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Error from service",
+			body: "https://practicum.yandex.ru",
+			mock: mockData{
+				returnID:  "",
+				returnErr: errors.New("error"),
+			},
+			want: want{
+				code:        http.StatusBadRequest,
+				response:    "error",
+				contentType: "text/plain",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mockService := new(URLServiceMock)
+			mockService.
+				On("AddURL", test.body).
+				Return(test.mock.returnID, test.mock.returnErr)
+
+			h := handlers.New(mockService)
+			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
+			w := httptest.NewRecorder()
+			h.AddURL(w, request)
+
+			assert.Equal(t, test.want.code, w.Code)
+			assert.Equal(t, test.want.response, strings.TrimSpace(w.Body.String()))
+			assert.Contains(t, w.Header().Get("Content-Type"), test.want.contentType)
+		})
+	}
+}
+
+func TestHandlers_GetURL(t *testing.T) {
+	type mockData struct {
+		returnURL string
+		returnErr error
+	}
+
+	type want struct {
+		code     int
+		location string
+	}
+
+	tests := []struct {
+		name string
+		id   string
+		mock mockData
+		want want
+	}{
+		{
+			name: "Success",
+			id:   "EwHXdJfB",
+			mock: mockData{
+				returnURL: "https://practicum.yandex.ru/",
+				returnErr: nil,
+			},
+			want: want{
+				code:     http.StatusTemporaryRedirect,
+				location: "https://practicum.yandex.ru/",
+			},
+		},
+		{
+			name: "Empty id",
+			id:   "",
+			mock: mockData{
+				returnURL: "https://practicum.yandex.ru/",
+				returnErr: nil,
+			},
+			want: want{
+				code:     http.StatusBadRequest,
+				location: "",
+			},
+		},
+		{
+			name: "Error from service",
+			id:   "EwHXdJfB",
+			mock: mockData{
+				returnURL: "",
+				returnErr: errors.New("error"),
+			},
+			want: want{
+				code:     http.StatusBadRequest,
+				location: "",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mockService := new(URLServiceMock)
+			mockService.
+				On("GetURL", test.id).
+				Return(test.mock.returnURL, test.mock.returnErr)
+
+			h := handlers.New(mockService)
+			request := httptest.NewRequest(http.MethodGet, "/"+test.id, nil)
+			request.SetPathValue("id", test.id)
+
+			w := httptest.NewRecorder()
+			h.GetURL(w, request)
+			assert.Equal(t, test.want.code, w.Code)
+			assert.Equal(t, test.want.location, w.Header().Get("Location"))
+		})
+	}
+}
