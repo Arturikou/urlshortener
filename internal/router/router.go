@@ -1,24 +1,13 @@
 package router
 
 import (
-	"github.com/Arturikou/urlshortener/internal/handler"
+	"github.com/Arturikou/urlshortener/internal/handlers"
 	"net/http"
 )
 
-func New() http.Handler {
+func New(h *handlers.Handlers) *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc(`/`, rootHandler)
+	mux.HandleFunc("POST /", h.AddURL)
+	mux.HandleFunc("GET /{id}", h.GetURL)
 	return mux
-}
-
-// Временное решение пока не перейду на другой роутер
-func rootHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodPost:
-		handler.PostURL(w, r)
-	case http.MethodGet:
-		handler.GetURL(w, r)
-	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-	}
 }
