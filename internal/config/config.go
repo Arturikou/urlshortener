@@ -12,8 +12,8 @@ type Config struct {
 
 func New() *Config {
 	cfg := &Config{}
-	flag.StringVar(&cfg.ServerAddr, "server-addr", "localhost:8080", "The address to listen on for HTTP requests.")
-	flag.StringVar(&cfg.Handlers.BaseAddr, "base-addr", "http://localhost:8080", "The address for url response")
+	flag.StringVar(&cfg.ServerAddr, "a", "localhost:8080", "The address to listen on for HTTP requests.")
+	flag.StringVar(&cfg.Handlers.BaseAddr, "b", "http://localhost:8080", "The address for url response")
 
 	return cfg
 }
