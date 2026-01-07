@@ -3,6 +3,7 @@ package handlers_test
 import (
 	"errors"
 	"github.com/Arturikou/urlshortener/internal/handlers"
+	"github.com/Arturikou/urlshortener/internal/handlers/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"net/http"
@@ -26,6 +27,10 @@ func (m *URLServiceMock) GetURL(id string) (string, error) {
 }
 
 func TestHandlers_AddURL(t *testing.T) {
+	cfg := config.Config{
+		BaseAddr: "http://localhost:8080",
+	}
+
 	type mockData struct {
 		returnID  string
 		returnErr error
@@ -90,7 +95,7 @@ func TestHandlers_AddURL(t *testing.T) {
 				On("AddURL", test.body).
 				Return(test.mock.returnID, test.mock.returnErr)
 
-			h := handlers.New(mockService)
+			h := handlers.New(mockService, cfg)
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
 			w := httptest.NewRecorder()
 			h.AddURL(w, request)
@@ -103,6 +108,10 @@ func TestHandlers_AddURL(t *testing.T) {
 }
 
 func TestHandlers_GetURL(t *testing.T) {
+	cfg := config.Config{
+		BaseAddr: "http://localhost:8080",
+	}
+
 	type mockData struct {
 		returnURL string
 		returnErr error
@@ -163,7 +172,7 @@ func TestHandlers_GetURL(t *testing.T) {
 				On("GetURL", test.id).
 				Return(test.mock.returnURL, test.mock.returnErr)
 
-			h := handlers.New(mockService)
+			h := handlers.New(mockService, cfg)
 			request := httptest.NewRequest(http.MethodGet, "/"+test.id, nil)
 			request.SetPathValue("id", test.id)
 

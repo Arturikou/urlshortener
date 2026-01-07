@@ -1,21 +1,21 @@
-package service
+package url
 
 import "fmt"
 
-type urlRepo interface {
+type repo interface {
 	Save(id, url string) error
 	Get(id string) (string, error)
 }
 
-type URLs struct {
-	repo urlRepo
+type Service struct {
+	repo repo
 }
 
-func New(repo urlRepo) *URLs {
-	return &URLs{repo}
+func New(repo repo) *Service {
+	return &Service{repo}
 }
 
-func (u *URLs) AddURL(url string) (string, error) {
+func (u *Service) AddURL(url string) (string, error) {
 	// временно пока не будет добавлена логика
 	id := "EwHXdJfB"
 	err := u.repo.Save(id, url)
@@ -26,7 +26,7 @@ func (u *URLs) AddURL(url string) (string, error) {
 	return id, nil
 }
 
-func (u *URLs) GetURL(id string) (string, error) {
+func (u *Service) GetURL(id string) (string, error) {
 	originalURL, err := u.repo.Get(id)
 	if err != nil {
 		return "", fmt.Errorf(`can't get id': %w`, err)

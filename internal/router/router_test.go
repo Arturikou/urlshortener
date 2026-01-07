@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/Arturikou/urlshortener/internal/handlers"
+	"github.com/Arturikou/urlshortener/internal/handlers/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -57,12 +58,16 @@ func testRequest(t *testing.T, ts *httptest.Server, method,
 }
 
 func TestRouter_AddURL(t *testing.T) {
+	cfg := config.Config{
+		BaseAddr: "http://localhost:8080",
+	}
+
 	mockService := new(URLServiceMock)
 	mockService.
 		On("AddURL", "https://practicum.yandex.ru").
 		Return("EwHXdJfB", nil)
 
-	h := handlers.New(mockService)
+	h := handlers.New(mockService, cfg)
 	ts := httptest.NewServer(New(h))
 	defer ts.Close()
 
@@ -82,12 +87,16 @@ func TestRouter_AddURL(t *testing.T) {
 }
 
 func TestRouter_GetURL(t *testing.T) {
+	cfg := config.Config{
+		BaseAddr: "http://localhost:8080",
+	}
+
 	mockService := new(URLServiceMock)
 	mockService.
 		On("GetURL", "EwHXdJfB").
 		Return("https://practicum.yandex.ru", nil)
 
-	h := handlers.New(mockService)
+	h := handlers.New(mockService, cfg)
 	ts := httptest.NewServer(New(h))
 	defer ts.Close()
 

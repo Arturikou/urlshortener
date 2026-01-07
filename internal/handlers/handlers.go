@@ -1,5 +1,7 @@
 package handlers
 
+import "github.com/Arturikou/urlshortener/internal/handlers/config"
+
 type URLService interface {
 	AddURL(url string) (string, error)
 	GetURL(id string) (string, error)
@@ -7,8 +9,12 @@ type URLService interface {
 
 type Handlers struct {
 	urlService URLService
+	cfg        config.Config
 }
 
-func New(url URLService) *Handlers {
-	return &Handlers{urlService: url}
+func New(urlService URLService, cfg config.Config) *Handlers {
+	return &Handlers{
+		urlService: urlService,
+		cfg:        cfg,
+	}
 }
