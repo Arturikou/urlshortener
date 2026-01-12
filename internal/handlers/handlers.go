@@ -2,6 +2,7 @@ package handlers
 
 import "github.com/Arturikou/urlshortener/internal/handlers/config"
 
+//go:generate mockery
 type URLService interface {
 	AddURL(url string) (string, error)
 	GetURL(id string) (string, error)

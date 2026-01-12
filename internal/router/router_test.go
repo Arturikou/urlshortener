@@ -3,8 +3,8 @@ package router
 import (
 	"github.com/Arturikou/urlshortener/internal/handlers"
 	"github.com/Arturikou/urlshortener/internal/handlers/config"
+	"github.com/Arturikou/urlshortener/internal/handlers/mocks"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
@@ -12,20 +12,6 @@ import (
 	"strings"
 	"testing"
 )
-
-type URLServiceMock struct {
-	mock.Mock
-}
-
-func (m *URLServiceMock) AddURL(url string) (string, error) {
-	args := m.Called(url)
-	return args.String(0), args.Error(1)
-}
-
-func (m *URLServiceMock) GetURL(id string) (string, error) {
-	args := m.Called(id)
-	return args.String(0), args.Error(1)
-}
 
 type testResponse struct {
 	StatusCode int
@@ -62,7 +48,7 @@ func TestRouter_AddURL(t *testing.T) {
 		BaseAddr: "http://localhost:8080",
 	}
 
-	mockService := new(URLServiceMock)
+	mockService := new(mocks.MockURLService)
 	mockService.
 		On("AddURL", "https://practicum.yandex.ru").
 		Return("EwHXdJfB", nil)
@@ -91,7 +77,7 @@ func TestRouter_GetURL(t *testing.T) {
 		BaseAddr: "http://localhost:8080",
 	}
 
-	mockService := new(URLServiceMock)
+	mockService := new(mocks.MockURLService)
 	mockService.
 		On("GetURL", "EwHXdJfB").
 		Return("https://practicum.yandex.ru", nil)

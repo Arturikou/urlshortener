@@ -1,0 +1,11 @@
+all: true
+template: testify
+
+packages:
+  github.com/Arturikou/urlshortener/internal/handlers:
+    config:
+      dir: "mocks"
+      pkgname: "mocks"
+      filename: "{{.InterfaceName}}_mock.go"
+    interfaces:
+      URLService: {}

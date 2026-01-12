@@ -4,27 +4,14 @@ import (
 	"errors"
 	"github.com/Arturikou/urlshortener/internal/handlers"
 	"github.com/Arturikou/urlshortener/internal/handlers/config"
+	"github.com/Arturikou/urlshortener/internal/handlers/mocks"
+	"github.com/Arturikou/urlshortener/internal/repository"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 )
-
-type URLServiceMock struct {
-	mock.Mock
-}
-
-func (m *URLServiceMock) AddURL(url string) (string, error) {
-	args := m.Called(url)
-	return args.String(0), args.Error(1)
-}
-
-func (m *URLServiceMock) GetURL(id string) (string, error) {
-	args := m.Called(id)
-	return args.String(0), args.Error(1)
-}
 
 func TestHandlers_AddURL(t *testing.T) {
 	cfg := config.Config{
@@ -82,15 +69,15 @@ func TestHandlers_AddURL(t *testing.T) {
 				returnErr: errors.New("error"),
 			},
 			want: want{
-				code:        http.StatusBadRequest,
-				response:    "error",
+				code:        http.StatusInternalServerError,
+				response:    "Internal Server Error",
 				contentType: "text/plain",
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			mockService := new(URLServiceMock)
+			mockService := new(mocks.MockURLService)
 			mockService.
 				On("AddURL", test.body).
 				Return(test.mock.returnID, test.mock.returnErr)
@@ -153,6 +140,18 @@ func TestHandlers_GetURL(t *testing.T) {
 			},
 		},
 		{
+			name: "ID not found",
+			id:   "DFSVDSFdd",
+			mock: mockData{
+				returnURL: "https://practicum.yandex.ru/",
+				returnErr: repository.ErrNotFound,
+			},
+			want: want{
+				code:     http.StatusNotFound,
+				location: "",
+			},
+		},
+		{
 			name: "Error from service",
 			id:   "EwHXdJfB",
 			mock: mockData{
@@ -160,14 +159,14 @@ func TestHandlers_GetURL(t *testing.T) {
 				returnErr: errors.New("error"),
 			},
 			want: want{
-				code:     http.StatusBadRequest,
+				code:     http.StatusInternalServerError,
 				location: "",
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			mockService := new(URLServiceMock)
+			mockService := new(mocks.MockURLService)
 			mockService.
 				On("GetURL", test.id).
 				Return(test.mock.returnURL, test.mock.returnErr)
