@@ -6,6 +6,6 @@ packages:
     config:
       dir: "mocks"
       pkgname: "mocks"
-      filename: "{{.InterfaceName}}_mock.go"
+      filename: "{{.InterfaceName | snakecase}}_mock.go"
     interfaces:
       URLService: {}

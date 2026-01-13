@@ -38,7 +38,7 @@ func (s *Store) Get(id string) (string, error) {
 
 	url, ok := s.urls[id]
 	if !ok {
-		return "", fmt.Errorf("get url with id %s: %w", id, ErrNotFound)
+		return "", fmt.Errorf("get shortener with id %s: %w", id, ErrNotFound)
 	}
 	return url, nil
 }

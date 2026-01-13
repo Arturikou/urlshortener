@@ -5,7 +5,7 @@ import (
 	"github.com/Arturikou/urlshortener/internal/handlers"
 	"github.com/Arturikou/urlshortener/internal/repository"
 	"github.com/Arturikou/urlshortener/internal/router"
-	"github.com/Arturikou/urlshortener/internal/service/url"
+	"github.com/Arturikou/urlshortener/internal/service/shortener"
 	"log"
 	"net/http"
 )
@@ -13,7 +13,7 @@ import (
 func main() {
 	cfg := config.New()
 	storage := repository.NewStore()
-	urlService := url.New(storage)
+	urlService := shortener.New(storage)
 	h := handlers.New(urlService, cfg.Handlers)
 	r := router.New(h)
 

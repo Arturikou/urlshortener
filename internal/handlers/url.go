@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"github.com/Arturikou/urlshortener/internal/repository"
+	"github.com/go-chi/chi/v5"
 	"io"
 	"log"
 	"net/http"
@@ -30,7 +31,12 @@ func (h *Handlers) AddURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortURL, _ := url.JoinPath(h.cfg.BaseAddr, id)
+	shortURL, err := url.JoinPath(h.cfg.BaseAddr, id)
+	if err != nil {
+		log.Printf("JoinPath error: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
@@ -38,7 +44,8 @@ func (h *Handlers) AddURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) GetURL(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
+	id := chi.URLParam(r, "id")
+
 	if id == "" {
 		http.Error(w, "id is required", http.StatusBadRequest)
 		return
@@ -47,7 +54,8 @@ func (h *Handlers) GetURL(w http.ResponseWriter, r *http.Request) {
 	originalURL, err := h.urlService.GetURL(id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			http.Error(w, "url not found", http.StatusNotFound)
+			http.Error(w, "shortener not found", http.StatusNotFound)
+			return
 		}
 
 		log.Printf("GetURL error: %v", err)

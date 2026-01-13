@@ -6,6 +6,7 @@ import (
 	"github.com/Arturikou/urlshortener/internal/handlers/config"
 	"github.com/Arturikou/urlshortener/internal/handlers/mocks"
 	"github.com/Arturikou/urlshortener/internal/repository"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -83,9 +84,13 @@ func TestHandlers_AddURL(t *testing.T) {
 				Return(test.mock.returnID, test.mock.returnErr)
 
 			h := handlers.New(mockService, cfg)
+			r := chi.NewRouter()
+			r.Post("/", h.AddURL)
+
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
 			w := httptest.NewRecorder()
-			h.AddURL(w, request)
+
+			r.ServeHTTP(w, request)
 
 			assert.Equal(t, test.want.code, w.Code)
 			assert.Equal(t, test.want.response, strings.TrimSpace(w.Body.String()))
@@ -135,7 +140,7 @@ func TestHandlers_GetURL(t *testing.T) {
 				returnErr: nil,
 			},
 			want: want{
-				code:     http.StatusBadRequest,
+				code:     http.StatusNotFound,
 				location: "",
 			},
 		},
@@ -172,11 +177,14 @@ func TestHandlers_GetURL(t *testing.T) {
 				Return(test.mock.returnURL, test.mock.returnErr)
 
 			h := handlers.New(mockService, cfg)
-			request := httptest.NewRequest(http.MethodGet, "/"+test.id, nil)
-			request.SetPathValue("id", test.id)
+			r := chi.NewRouter()
+			r.Get("/{id}", h.GetURL)
 
+			request := httptest.NewRequest(http.MethodGet, "/"+test.id, nil)
 			w := httptest.NewRecorder()
-			h.GetURL(w, request)
+
+			r.ServeHTTP(w, request)
+
 			assert.Equal(t, test.want.code, w.Code)
 			assert.Equal(t, test.want.location, w.Header().Get("Location"))
 		})

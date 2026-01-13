@@ -1,4 +1,4 @@
-package url
+package shortener
 
 import (
 	"crypto/rand"
@@ -8,21 +8,25 @@ import (
 	"math/big"
 )
 
-type repo interface {
+const defaultMaxRetries = 10
+
+type Repository interface {
 	Save(id, url string) error
 	Get(id string) (string, error)
 }
 
 type Service struct {
-	repo repo
+	repo Repository
 }
 
-func New(repo repo) *Service {
-	return &Service{repo}
+func New(repo Repository) *Service {
+	return &Service{
+		repo: repo,
+	}
 }
 
 func (u *Service) AddURL(url string) (string, error) {
-	for {
+	for i := 0; i < defaultMaxRetries; i++ {
 		id, err := generateID()
 		if err != nil {
 			return "", fmt.Errorf("failed to generate id: %w", err)
@@ -37,14 +41,16 @@ func (u *Service) AddURL(url string) (string, error) {
 			continue
 		}
 
-		return "", fmt.Errorf(`can't save id': %w`, err)
+		return "", fmt.Errorf("can't save id: %w", err)
 	}
+
+	return "", fmt.Errorf("failed to generate unique id after %d attempts", defaultMaxRetries)
 }
 
 func (u *Service) GetURL(id string) (string, error) {
 	originalURL, err := u.repo.Get(id)
 	if err != nil {
-		return "", fmt.Errorf(`can't get id': %w`, err)
+		return "", fmt.Errorf("can't get id: %w", err)
 	}
 
 	return originalURL, nil
