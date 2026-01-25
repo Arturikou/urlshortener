@@ -6,6 +6,7 @@ import (
 	"github.com/Arturikou/urlshortener/internal/handlers/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -52,9 +53,11 @@ func TestRouter_AddURL(t *testing.T) {
 	mockService.
 		On("AddURL", "https://practicum.yandex.ru").
 		Return("EwHXdJfB", nil)
+	logger := zap.NewNop()
+	loggerSugar := zap.NewNop().Sugar()
 
-	h := handlers.New(mockService, cfg)
-	ts := httptest.NewServer(New(h))
+	h := handlers.New(mockService, cfg, loggerSugar)
+	ts := httptest.NewServer(New(h, logger))
 	defer ts.Close()
 
 	resp := testRequest(
@@ -81,9 +84,11 @@ func TestRouter_GetURL(t *testing.T) {
 	mockService.
 		On("GetURL", "EwHXdJfB").
 		Return("https://practicum.yandex.ru", nil)
+	logger := zap.NewNop()
+	loggerSugar := zap.NewNop().Sugar()
 
-	h := handlers.New(mockService, cfg)
-	ts := httptest.NewServer(New(h))
+	h := handlers.New(mockService, cfg, loggerSugar)
+	ts := httptest.NewServer(New(h, logger))
 	defer ts.Close()
 
 	resp := testRequest(

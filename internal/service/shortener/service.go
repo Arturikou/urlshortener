@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Arturikou/urlshortener/internal/repository"
+	"go.uber.org/zap"
 	"math/big"
 )
 
@@ -16,12 +17,14 @@ type Repository interface {
 }
 
 type Service struct {
-	repo Repository
+	repo   Repository
+	logger *zap.SugaredLogger
 }
 
-func New(repo Repository) *Service {
+func New(repo Repository, logger *zap.SugaredLogger) *Service {
 	return &Service{
-		repo: repo,
+		repo:   repo,
+		logger: logger,
 	}
 }
 

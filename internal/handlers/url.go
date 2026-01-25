@@ -5,7 +5,6 @@ import (
 	"github.com/Arturikou/urlshortener/internal/repository"
 	"github.com/go-chi/chi/v5"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -26,14 +25,14 @@ func (h *Handlers) AddURL(w http.ResponseWriter, r *http.Request) {
 	originalURL := strings.TrimSpace(string(body))
 	id, err := h.urlService.AddURL(originalURL)
 	if err != nil {
-		log.Printf("AddURL error: %v", err)
+		h.logger.Errorw("failed to add URL", "url", originalURL, "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	shortURL, err := url.JoinPath(h.cfg.BaseAddr, id)
 	if err != nil {
-		log.Printf("JoinPath error: %v", err)
+		h.logger.Errorw("failed to build short URL path", "base", h.cfg.BaseAddr, "id", id, "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -58,7 +57,7 @@ func (h *Handlers) GetURL(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Printf("GetURL error: %v", err)
+		h.logger.Errorw("database error during GetURL", "id", id, "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
