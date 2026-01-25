@@ -1,6 +1,9 @@
 package handlers
 
-import "github.com/Arturikou/urlshortener/internal/handlers/config"
+import (
+	"github.com/Arturikou/urlshortener/internal/handlers/config"
+	"go.uber.org/zap"
+)
 
 //go:generate mockery
 type URLService interface {
@@ -11,11 +14,13 @@ type URLService interface {
 type Handlers struct {
 	urlService URLService
 	cfg        config.Config
+	logger     *zap.SugaredLogger
 }
 
-func New(urlService URLService, cfg config.Config) *Handlers {
+func New(urlService URLService, cfg config.Config, logger *zap.SugaredLogger) *Handlers {
 	return &Handlers{
 		urlService: urlService,
 		cfg:        cfg,
+		logger:     logger,
 	}
 }

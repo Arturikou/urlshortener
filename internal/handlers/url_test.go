@@ -8,6 +8,7 @@ import (
 	"github.com/Arturikou/urlshortener/internal/repository"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -82,8 +83,9 @@ func TestHandlers_AddURL(t *testing.T) {
 			mockService.
 				On("AddURL", test.body).
 				Return(test.mock.returnID, test.mock.returnErr)
+			logger := zap.NewNop().Sugar()
 
-			h := handlers.New(mockService, cfg)
+			h := handlers.New(mockService, cfg, logger)
 			r := chi.NewRouter()
 			r.Post("/", h.AddURL)
 
@@ -175,8 +177,9 @@ func TestHandlers_GetURL(t *testing.T) {
 			mockService.
 				On("GetURL", test.id).
 				Return(test.mock.returnURL, test.mock.returnErr)
+			logger := zap.NewNop().Sugar()
 
-			h := handlers.New(mockService, cfg)
+			h := handlers.New(mockService, cfg, logger)
 			r := chi.NewRouter()
 			r.Get("/{id}", h.GetURL)
 
