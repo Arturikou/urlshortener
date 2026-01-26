@@ -16,9 +16,8 @@ import (
 )
 
 func TestHandlers_AddURL(t *testing.T) {
-	cfg := config.Config{
-		BaseAddr: "http://localhost:8080",
-	}
+	cfg := config.Config{BaseAddr: "http://localhost:8080"}
+	logger := zap.NewNop().Sugar()
 
 	type mockData struct {
 		returnID  string
@@ -83,7 +82,6 @@ func TestHandlers_AddURL(t *testing.T) {
 			mockService.
 				On("AddURL", test.body).
 				Return(test.mock.returnID, test.mock.returnErr)
-			logger := zap.NewNop().Sugar()
 
 			h := handlers.New(mockService, cfg, logger)
 			r := chi.NewRouter()
@@ -102,9 +100,8 @@ func TestHandlers_AddURL(t *testing.T) {
 }
 
 func TestHandlers_GetURL(t *testing.T) {
-	cfg := config.Config{
-		BaseAddr: "http://localhost:8080",
-	}
+	cfg := config.Config{BaseAddr: "http://localhost:8080"}
+	logger := zap.NewNop().Sugar()
 
 	type mockData struct {
 		returnURL string
@@ -177,7 +174,6 @@ func TestHandlers_GetURL(t *testing.T) {
 			mockService.
 				On("GetURL", test.id).
 				Return(test.mock.returnURL, test.mock.returnErr)
-			logger := zap.NewNop().Sugar()
 
 			h := handlers.New(mockService, cfg, logger)
 			r := chi.NewRouter()

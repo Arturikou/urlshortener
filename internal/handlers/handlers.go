@@ -17,7 +17,11 @@ type Handlers struct {
 	logger     *zap.SugaredLogger
 }
 
-func New(urlService URLService, cfg config.Config, logger *zap.SugaredLogger) *Handlers {
+func New(
+	urlService URLService,
+	cfg config.Config,
+	logger *zap.SugaredLogger,
+) *Handlers {
 	return &Handlers{
 		urlService: urlService,
 		cfg:        cfg,

@@ -19,6 +19,9 @@ func New(h *handlers.Handlers, l *zap.Logger) *chi.Mux {
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", h.GetURL)
 		})
+		r.Route("/api", func(r chi.Router) {
+			r.Post("/shorten", h.Shorten)
+		})
 	})
 
 	return r
