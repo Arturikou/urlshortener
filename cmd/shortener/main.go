@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"
-	"github.com/Arturikou/urlshortener/internal/logger"
+	"github.com/Arturikou/urlshortener/internal/logging"
 	"github.com/Arturikou/urlshortener/internal/repository"
 	"github.com/Arturikou/urlshortener/internal/router"
 	"github.com/Arturikou/urlshortener/internal/service/shortener"
@@ -15,9 +15,9 @@ import (
 func main() {
 	cfg := config.New()
 
-	l, err := logger.Initialize(cfg.LogLevel)
+	l, err := logging.New(cfg.LogLevel)
 	if err != nil {
-		log.Fatalf("can't initialize logger: %v", err)
+		log.Fatalf("can't initialize logging: %v", err)
 	}
 	defer l.Sync()
 	sl := l.Sugar()

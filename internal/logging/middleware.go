@@ -1,4 +1,4 @@
-package logger
+package logging
 
 import (
 	"github.com/go-chi/chi/v5/middleware"
@@ -7,23 +7,7 @@ import (
 	"time"
 )
 
-func Initialize(level string) (*zap.Logger, error) {
-	lvl, err := zap.ParseAtomicLevel(level)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := zap.NewProductionConfig()
-	cfg.Level = lvl
-	zl, err := cfg.Build()
-	if err != nil {
-		return nil, err
-	}
-
-	return zl, nil
-}
-
-func WithLogging(logger *zap.Logger) func(next http.Handler) http.Handler {
+func RequestLogger(logger *zap.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)

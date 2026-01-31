@@ -9,3 +9,4 @@ packages:
       filename: "{{.InterfaceName | snakecase}}_mock.go"
     interfaces:
       URLService: {}
+      Shortener: {}
