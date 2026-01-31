@@ -4,7 +4,9 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"github.com/Arturikou/urlshortener/internal/models"
 	"github.com/Arturikou/urlshortener/internal/repository"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"math/big"
 )
@@ -12,7 +14,7 @@ import (
 const defaultMaxRetries = 10
 
 type Repository interface {
-	Save(id, url string) error
+	Save(record *models.URLData) error
 	Get(id string) (string, error)
 }
 
@@ -28,14 +30,21 @@ func New(repo Repository, logger *zap.SugaredLogger) *Service {
 	}
 }
 
-func (u *Service) AddURL(url string) (string, error) {
+func (u *Service) AddURL(originalURL string) (string, error) {
 	for i := 0; i < defaultMaxRetries; i++ {
 		id, err := generateID()
 		if err != nil {
 			return "", fmt.Errorf("failed to generate id: %w", err)
 		}
 
-		err = u.repo.Save(id, url)
+		newUUID := uuid.New().String()
+		urlData := &models.URLData{
+			OriginalURL: originalURL,
+			ShortURL:    id,
+			UUID:        newUUID,
+		}
+
+		err = u.repo.Save(urlData)
 		if err == nil {
 			return id, nil
 		}

@@ -22,7 +22,11 @@ func main() {
 	defer l.Sync()
 	sl := l.Sugar()
 
-	storage := repository.NewStore()
+	storage, err := repository.NewStore(cfg.FileStoragePath)
+	if err != nil {
+		log.Fatalf("can't initialize storage: %v", err)
+	}
+
 	urlService := shortener.New(storage, sl)
 	h := handlers.New(urlService, cfg.Handlers, sl)
 	r := router.New(h, l)
