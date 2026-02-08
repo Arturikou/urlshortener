@@ -2,8 +2,8 @@ package handlers_test
 
 import (
 	"errors"
+	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"
-	"github.com/Arturikou/urlshortener/internal/handlers/config"
 	"github.com/Arturikou/urlshortener/internal/handlers/mocks"
 	"github.com/Arturikou/urlshortener/internal/repository"
 	"github.com/go-chi/chi/v5"
@@ -16,7 +16,7 @@ import (
 )
 
 func TestHandlers_AddURL(t *testing.T) {
-	cfg := config.Config{BaseAddr: "http://localhost:8080"}
+	cfg := config.HandlersConfig{BaseAddr: "http://localhost:8080"}
 	logger := zap.NewNop().Sugar()
 
 	type mockData struct {
@@ -100,7 +100,7 @@ func TestHandlers_AddURL(t *testing.T) {
 }
 
 func TestHandlers_GetURL(t *testing.T) {
-	cfg := config.Config{BaseAddr: "http://localhost:8080"}
+	cfg := config.HandlersConfig{BaseAddr: "http://localhost:8080"}
 	logger := zap.NewNop().Sugar()
 
 	type mockData struct {

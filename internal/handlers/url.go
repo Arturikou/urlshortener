@@ -39,7 +39,10 @@ func (h *Handlers) AddURL(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(shortURL))
+	_, err = w.Write([]byte(shortURL))
+	if err != nil {
+		h.logger.Errorw("failed to write body", "url", originalURL, "error", err)
+	}
 }
 
 func (h *Handlers) GetURL(w http.ResponseWriter, r *http.Request) {

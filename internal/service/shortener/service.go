@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/Arturikou/urlshortener/internal/models"
 	"github.com/Arturikou/urlshortener/internal/repository"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"math/big"
 )
@@ -37,11 +36,9 @@ func (u *Service) AddURL(originalURL string) (string, error) {
 			return "", fmt.Errorf("failed to generate id: %w", err)
 		}
 
-		newUUID := uuid.New().String()
 		urlData := &models.URLData{
 			OriginalURL: originalURL,
 			ShortURL:    id,
-			UUID:        newUUID,
 		}
 
 		err = u.repo.Save(urlData)

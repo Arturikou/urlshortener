@@ -2,15 +2,21 @@ package config
 
 import (
 	"flag"
-	hc "github.com/Arturikou/urlshortener/internal/handlers/config"
+	"fmt"
+	"log"
 	"os"
+	"path/filepath"
 )
+
+type HandlersConfig struct {
+	BaseAddr string
+}
 
 type Config struct {
 	ServerAddr      string
 	LogLevel        string
 	FileStoragePath string
-	Handlers        hc.Config
+	Handlers        HandlersConfig
 }
 
 func New() *Config {
@@ -38,5 +44,34 @@ func New() *Config {
 		cfg.Handlers.BaseAddr = envBaseAddr
 	}
 
+	if err := validateFilePath(cfg.FileStoragePath); err != nil {
+		log.Fatalf("Configuration error: %v", err)
+	}
+
 	return cfg
+}
+
+func validateFilePath(filePath string) error {
+	absPath, err := filepath.Abs(filePath)
+	if err != nil {
+		return err
+	}
+	dir := filepath.Dir(absPath)
+
+	fileInfo, err := os.Stat(dir)
+	if err != nil {
+		return fmt.Errorf("directory check failed for %s: %w", dir, err)
+	}
+	if !fileInfo.IsDir() {
+		return fmt.Errorf("path %s is not a directory", dir)
+	}
+
+	tmp, err := os.CreateTemp(dir, "perm_check_")
+	if err != nil {
+		return fmt.Errorf("directory %s is not writable: %w", dir, err)
+	}
+	tmp.Close()
+	os.Remove(tmp.Name())
+
+	return nil
 }

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"
-	"github.com/Arturikou/urlshortener/internal/handlers/config"
 	"github.com/Arturikou/urlshortener/internal/handlers/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -17,7 +17,7 @@ import (
 )
 
 func TestHandlers_Shorten(t *testing.T) {
-	cfg := config.Config{BaseAddr: "http://localhost:8080"}
+	cfg := config.HandlersConfig{BaseAddr: "http://localhost:8080"}
 	logger := zap.NewNop().Sugar()
 
 	type want struct {

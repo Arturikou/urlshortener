@@ -3,8 +3,8 @@ package router
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"
-	"github.com/Arturikou/urlshortener/internal/handlers/config"
 	"github.com/Arturikou/urlshortener/internal/handlers/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -55,7 +55,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 }
 
 func TestRouter_AddURL(t *testing.T) {
-	cfg := config.Config{BaseAddr: "http://localhost:8080"}
+	cfg := config.HandlersConfig{BaseAddr: "http://localhost:8080"}
 	mockService := new(mocks.MockURLService)
 	mockService.On("AddURL", "https://practicum.yandex.ru").Return("EwHXdJfB", nil)
 
@@ -73,7 +73,7 @@ func TestRouter_AddURL(t *testing.T) {
 }
 
 func TestRouter_GetURL(t *testing.T) {
-	cfg := config.Config{BaseAddr: "http://localhost:8080"}
+	cfg := config.HandlersConfig{BaseAddr: "http://localhost:8080"}
 	mockService := new(mocks.MockURLService)
 	mockService.On("GetURL", "EwHXdJfB").
 		Return("https://practicum.yandex.ru", nil)
@@ -91,7 +91,7 @@ func TestRouter_GetURL(t *testing.T) {
 }
 
 func TestRouter_ShortenURL(t *testing.T) {
-	cfg := config.Config{BaseAddr: "http://localhost:8080"}
+	cfg := config.HandlersConfig{BaseAddr: "http://localhost:8080"}
 	mockService := new(mocks.MockURLService)
 	mockService.On("AddURL", mock.Anything).
 		Return("EwHXdJfB", nil).Once()

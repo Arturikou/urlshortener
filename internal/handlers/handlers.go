@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/Arturikou/urlshortener/internal/handlers/config"
+	"github.com/Arturikou/urlshortener/internal/config"
 	"go.uber.org/zap"
 )
 
@@ -13,13 +13,13 @@ type URLService interface {
 
 type Handlers struct {
 	urlService URLService
-	cfg        config.Config
+	cfg        config.HandlersConfig
 	logger     *zap.SugaredLogger
 }
 
 func New(
 	urlService URLService,
-	cfg config.Config,
+	cfg config.HandlersConfig,
 	logger *zap.SugaredLogger,
 ) *Handlers {
 	return &Handlers{
