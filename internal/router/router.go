@@ -17,6 +17,7 @@ func New(h *handlers.Handlers, l *zap.Logger) *chi.Mux {
 	r.Use(mw.Gzip)
 
 	r.Route("/", func(r chi.Router) {
+		r.Get("/ping", h.Ping)
 		r.Post("/", h.AddURL)
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", h.GetURL)

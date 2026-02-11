@@ -1,12 +1,12 @@
+with-expecter: true
 all: true
-template: testify
 
 packages:
   github.com/Arturikou/urlshortener/internal/handlers:
     config:
       dir: "mocks"
-      pkgname: "mocks"
+      outpkg: "mocks"
       filename: "{{.InterfaceName | snakecase}}_mock.go"
     interfaces:
       URLService: {}
-      Shortener: {}
+      Repo: {}

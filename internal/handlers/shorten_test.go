@@ -86,9 +86,10 @@ func TestHandlers_Shorten(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mockService := new(mocks.MockURLService)
+			mockRepo := mocks.NewMockRepo(t)
 			test.setupService(mockService)
 
-			h := handlers.New(mockService, cfg, logger)
+			h := handlers.New(mockService, mockRepo, cfg, logger)
 			recorder := httptest.NewRecorder()
 
 			var buf bytes.Buffer

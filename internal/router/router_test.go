@@ -58,9 +58,10 @@ func TestRouter_AddURL(t *testing.T) {
 	cfg := config.HandlersConfig{BaseAddr: "http://localhost:8080"}
 	mockService := new(mocks.MockURLService)
 	mockService.On("AddURL", "https://practicum.yandex.ru").Return("EwHXdJfB", nil)
+	mockRepo := mocks.NewMockRepo(t)
 
 	logger := zap.NewNop()
-	h := handlers.New(mockService, cfg, logger.Sugar())
+	h := handlers.New(mockService, mockRepo, cfg, logger.Sugar())
 	ts := httptest.NewServer(New(h, logger))
 	defer ts.Close()
 
@@ -77,9 +78,10 @@ func TestRouter_GetURL(t *testing.T) {
 	mockService := new(mocks.MockURLService)
 	mockService.On("GetURL", "EwHXdJfB").
 		Return("https://practicum.yandex.ru", nil)
+	mockRepo := mocks.NewMockRepo(t)
 
 	logger := zap.NewNop()
-	h := handlers.New(mockService, cfg, logger.Sugar())
+	h := handlers.New(mockService, mockRepo, cfg, logger.Sugar())
 	ts := httptest.NewServer(New(h, logger))
 	defer ts.Close()
 
@@ -95,9 +97,10 @@ func TestRouter_ShortenURL(t *testing.T) {
 	mockService := new(mocks.MockURLService)
 	mockService.On("AddURL", mock.Anything).
 		Return("EwHXdJfB", nil).Once()
+	mockRepo := mocks.NewMockRepo(t)
 
 	logger := zap.NewNop()
-	h := handlers.New(mockService, cfg, logger.Sugar())
+	h := handlers.New(mockService, mockRepo, cfg, logger.Sugar())
 	ts := httptest.NewServer(New(h, logger))
 	defer ts.Close()
 

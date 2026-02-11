@@ -83,7 +83,9 @@ func TestHandlers_AddURL(t *testing.T) {
 				On("AddURL", test.body).
 				Return(test.mock.returnID, test.mock.returnErr)
 
-			h := handlers.New(mockService, cfg, logger)
+			mockRepo := mocks.NewMockRepo(t)
+
+			h := handlers.New(mockService, mockRepo, cfg, logger)
 			r := chi.NewRouter()
 			r.Post("/", h.AddURL)
 
@@ -170,12 +172,13 @@ func TestHandlers_GetURL(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			mockRepo := mocks.NewMockRepo(t)
 			mockService := new(mocks.MockURLService)
 			mockService.
 				On("GetURL", test.id).
 				Return(test.mock.returnURL, test.mock.returnErr)
 
-			h := handlers.New(mockService, cfg, logger)
+			h := handlers.New(mockService, mockRepo, cfg, logger)
 			r := chi.NewRouter()
 			r.Get("/{id}", h.GetURL)
 

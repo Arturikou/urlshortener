@@ -12,11 +12,16 @@ type HandlersConfig struct {
 	BaseAddr string
 }
 
+type DatabaseConfig struct {
+	DSN string
+}
+
 type Config struct {
 	ServerAddr      string
 	LogLevel        string
 	FileStoragePath string
 	Handlers        HandlersConfig
+	Database        DatabaseConfig
 }
 
 func New() *Config {
@@ -26,6 +31,7 @@ func New() *Config {
 	flag.StringVar(&cfg.LogLevel, "level", "info", "Log level")
 	flag.StringVar(&cfg.FileStoragePath, "f", "storage.json", "File storage path")
 	flag.StringVar(&cfg.Handlers.BaseAddr, "b", "http://localhost:8080", "The address for shortener response")
+	flag.StringVar(&cfg.Database.DSN, "d", "", "Database DSN")
 	flag.Parse()
 
 	if envServerAddr := os.Getenv("SERVER_ADDRESS"); envServerAddr != "" {
@@ -42,6 +48,10 @@ func New() *Config {
 
 	if envBaseAddr := os.Getenv("BASE_URL"); envBaseAddr != "" {
 		cfg.Handlers.BaseAddr = envBaseAddr
+	}
+
+	if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
+		cfg.Database.DSN = envDatabaseDSN
 	}
 
 	if err := validateFilePath(cfg.FileStoragePath); err != nil {
