@@ -7,6 +7,7 @@ import (
 	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"
 	"github.com/Arturikou/urlshortener/internal/handlers/mocks"
+	pinger "github.com/Arturikou/urlshortener/internal/storage/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -38,7 +39,7 @@ func TestHandlers_Shorten(t *testing.T) {
 				URL: "https://practicum.yandex.ru",
 			},
 			setupService: func(m *mocks.MockURLService) {
-				m.On("AddURL", mock.Anything).
+				m.On("AddURL", mock.Anything, mock.Anything).
 					Return("/EwHXdJfB", nil).Once()
 			},
 			want: want{
@@ -73,7 +74,7 @@ func TestHandlers_Shorten(t *testing.T) {
 				URL: "https://practicum.yandex.ru",
 			},
 			setupService: func(m *mocks.MockURLService) {
-				m.On("AddURL", mock.Anything).
+				m.On("AddURL", mock.Anything, mock.Anything).
 					Return("", errors.New("error")).Once()
 			},
 			want: want{
@@ -86,10 +87,10 @@ func TestHandlers_Shorten(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mockService := new(mocks.MockURLService)
-			mockRepo := mocks.NewMockRepo(t)
+			mockPinger := new(pinger.MockPinger)
 			test.setupService(mockService)
 
-			h := handlers.New(mockService, mockRepo, cfg, logger)
+			h := handlers.New(mockService, mockPinger, cfg, logger)
 			recorder := httptest.NewRecorder()
 
 			var buf bytes.Buffer

@@ -5,9 +5,11 @@ import (
 	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"
 	"github.com/Arturikou/urlshortener/internal/handlers/mocks"
-	"github.com/Arturikou/urlshortener/internal/repository"
+	"github.com/Arturikou/urlshortener/internal/models"
+	pinger "github.com/Arturikou/urlshortener/internal/storage/mocks"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 	"net/http"
 	"net/http/httptest"
@@ -80,12 +82,12 @@ func TestHandlers_AddURL(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			mockService := new(mocks.MockURLService)
 			mockService.
-				On("AddURL", test.body).
+				On("AddURL", mock.Anything, test.body).
 				Return(test.mock.returnID, test.mock.returnErr)
 
-			mockRepo := mocks.NewMockRepo(t)
+			mockPinger := pinger.NewMockPinger(t)
 
-			h := handlers.New(mockService, mockRepo, cfg, logger)
+			h := handlers.New(mockService, mockPinger, cfg, logger)
 			r := chi.NewRouter()
 			r.Post("/", h.AddURL)
 
@@ -116,14 +118,14 @@ func TestHandlers_GetURL(t *testing.T) {
 	}
 
 	tests := []struct {
-		name string
-		id   string
-		mock mockData
-		want want
+		name  string
+		alias string
+		mock  mockData
+		want  want
 	}{
 		{
-			name: "Success",
-			id:   "EwHXdJfB",
+			name:  "Success",
+			alias: "EwHXdJfB",
 			mock: mockData{
 				returnURL: "https://practicum.yandex.ru/",
 				returnErr: nil,
@@ -134,8 +136,8 @@ func TestHandlers_GetURL(t *testing.T) {
 			},
 		},
 		{
-			name: "Empty id",
-			id:   "",
+			name:  "Empty alias",
+			alias: "",
 			mock: mockData{
 				returnURL: "https://practicum.yandex.ru/",
 				returnErr: nil,
@@ -146,11 +148,11 @@ func TestHandlers_GetURL(t *testing.T) {
 			},
 		},
 		{
-			name: "ID not found",
-			id:   "DFSVDSFdd",
+			name:  "ID not found",
+			alias: "DFSVDSFdd",
 			mock: mockData{
 				returnURL: "https://practicum.yandex.ru/",
-				returnErr: repository.ErrNotFound,
+				returnErr: models.ErrNotFound,
 			},
 			want: want{
 				code:     http.StatusNotFound,
@@ -158,8 +160,8 @@ func TestHandlers_GetURL(t *testing.T) {
 			},
 		},
 		{
-			name: "Error from service",
-			id:   "EwHXdJfB",
+			name:  "Error from service",
+			alias: "EwHXdJfB",
 			mock: mockData{
 				returnURL: "",
 				returnErr: errors.New("error"),
@@ -172,17 +174,17 @@ func TestHandlers_GetURL(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			mockRepo := mocks.NewMockRepo(t)
+			mockPinger := pinger.NewMockPinger(t)
 			mockService := new(mocks.MockURLService)
 			mockService.
-				On("GetURL", test.id).
+				On("GetURL", mock.Anything, test.alias).
 				Return(test.mock.returnURL, test.mock.returnErr)
 
-			h := handlers.New(mockService, mockRepo, cfg, logger)
+			h := handlers.New(mockService, mockPinger, cfg, logger)
 			r := chi.NewRouter()
-			r.Get("/{id}", h.GetURL)
+			r.Get("/{alias}", h.GetURL)
 
-			request := httptest.NewRequest(http.MethodGet, "/"+test.id, nil)
+			request := httptest.NewRequest(http.MethodGet, "/"+test.alias, nil)
 			w := httptest.NewRecorder()
 
 			r.ServeHTTP(w, request)

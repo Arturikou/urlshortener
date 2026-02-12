@@ -7,7 +7,7 @@ import (
 )
 
 func (h *Handlers) Ping(w http.ResponseWriter, r *http.Request) {
-	if h.repo == nil {
+	if h.pinger == nil {
 		h.logger.Error("database repository is not initialized")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -16,7 +16,7 @@ func (h *Handlers) Ping(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 1*time.Second)
 	defer cancel()
 
-	if err := h.repo.Ping(ctx); err != nil {
+	if err := h.pinger.Ping(ctx); err != nil {
 		h.logger.Errorf("database ping failed: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return

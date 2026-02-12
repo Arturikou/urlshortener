@@ -6,6 +6,7 @@ import (
 	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"
 	"github.com/Arturikou/urlshortener/internal/handlers/mocks"
+	pinger "github.com/Arturikou/urlshortener/internal/storage/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -57,11 +58,11 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 func TestRouter_AddURL(t *testing.T) {
 	cfg := config.HandlersConfig{BaseAddr: "http://localhost:8080"}
 	mockService := new(mocks.MockURLService)
-	mockService.On("AddURL", "https://practicum.yandex.ru").Return("EwHXdJfB", nil)
-	mockRepo := mocks.NewMockRepo(t)
+	mockService.On("AddURL", mock.Anything, "https://practicum.yandex.ru").Return("EwHXdJfB", nil)
+	mockPinger := pinger.NewMockPinger(t)
 
 	logger := zap.NewNop()
-	h := handlers.New(mockService, mockRepo, cfg, logger.Sugar())
+	h := handlers.New(mockService, mockPinger, cfg, logger.Sugar())
 	ts := httptest.NewServer(New(h, logger))
 	defer ts.Close()
 
@@ -76,12 +77,12 @@ func TestRouter_AddURL(t *testing.T) {
 func TestRouter_GetURL(t *testing.T) {
 	cfg := config.HandlersConfig{BaseAddr: "http://localhost:8080"}
 	mockService := new(mocks.MockURLService)
-	mockService.On("GetURL", "EwHXdJfB").
+	mockService.On("GetURL", mock.Anything, "EwHXdJfB").
 		Return("https://practicum.yandex.ru", nil)
-	mockRepo := mocks.NewMockRepo(t)
+	mockPinger := pinger.NewMockPinger(t)
 
 	logger := zap.NewNop()
-	h := handlers.New(mockService, mockRepo, cfg, logger.Sugar())
+	h := handlers.New(mockService, mockPinger, cfg, logger.Sugar())
 	ts := httptest.NewServer(New(h, logger))
 	defer ts.Close()
 
@@ -95,12 +96,12 @@ func TestRouter_GetURL(t *testing.T) {
 func TestRouter_ShortenURL(t *testing.T) {
 	cfg := config.HandlersConfig{BaseAddr: "http://localhost:8080"}
 	mockService := new(mocks.MockURLService)
-	mockService.On("AddURL", mock.Anything).
+	mockService.On("AddURL", mock.Anything, mock.Anything).
 		Return("EwHXdJfB", nil).Once()
-	mockRepo := mocks.NewMockRepo(t)
+	mockPinger := pinger.NewMockPinger(t)
 
 	logger := zap.NewNop()
-	h := handlers.New(mockService, mockRepo, cfg, logger.Sugar())
+	h := handlers.New(mockService, mockPinger, cfg, logger.Sugar())
 	ts := httptest.NewServer(New(h, logger))
 	defer ts.Close()
 

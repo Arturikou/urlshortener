@@ -2,15 +2,41 @@ package postgres
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
 )
 
-type Storage struct {
+type Repo struct {
 	pool *pgxpool.Pool
 }
 
-func New(ctx context.Context, dsn string) (*Storage, error) {
+const migrationsPath = "file://migrations"
+
+func runMigrations(dsn string, migrationsPath string) error {
+	dsn = "pgx5" + dsn[8:]
+	m, err := migrate.New(migrationsPath, dsn)
+	if err != nil {
+		return fmt.Errorf("could not create migrate instance: %w", err)
+	}
+	defer m.Close()
+
+	if err = m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return fmt.Errorf("failed to apply migrations: %w", err)
+	}
+
+	return nil
+}
+
+func New(ctx context.Context, dsn string) (*Repo, error) {
+	if err := runMigrations(dsn, migrationsPath); err != nil {
+		return nil, fmt.Errorf("migration step failed: %w", err)
+	}
+
 	dbPool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		return nil, err
@@ -19,20 +45,20 @@ func New(ctx context.Context, dsn string) (*Storage, error) {
 	pingCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
-	if err := dbPool.Ping(pingCtx); err != nil {
+	if err = dbPool.Ping(pingCtx); err != nil {
 		dbPool.Close()
 		return nil, err
 	}
 
-	return &Storage{
+	return &Repo{
 		pool: dbPool,
 	}, nil
 }
 
-func (s *Storage) Close() {
+func (s *Repo) Close() {
 	s.pool.Close()
 }
 
-func (s *Storage) Ping(ctx context.Context) error {
+func (s *Repo) Ping(ctx context.Context) error {
 	return s.pool.Ping(ctx)
 }

@@ -1,26 +1,25 @@
-package repository
+package filestore
 
 import (
 	"fmt"
-	"github.com/Arturikou/urlshortener/internal/models"
-	"github.com/Arturikou/urlshortener/internal/repository/file"
+	"github.com/Arturikou/urlshortener/internal/repository/memory"
 	"go.uber.org/zap"
 	"io"
 )
 
 type FileStore struct {
-	memoryStore *MemoryStore
-	producer    *file.Producer
+	memoryStore *memory.Store
+	producer    *Producer
 	fileName    string
 	logger      *zap.SugaredLogger
 }
 
 func NewFileStore(
 	fileName string,
-	memoryStore *MemoryStore,
+	memoryStore *memory.Store,
 	logger *zap.SugaredLogger,
 ) (*FileStore, error) {
-	producer, err := file.NewProducer(fileName)
+	producer, err := NewProducer(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("create producer: %w", err)
 	}
@@ -33,24 +32,12 @@ func NewFileStore(
 	}, nil
 }
 
-func (fs *FileStore) Save(urlData *models.URLData) error {
-	if err := fs.producer.WriteEvent(urlData); err != nil {
-		return fmt.Errorf("file save: %w", err)
-	}
-
-	return fs.memoryStore.Save(urlData)
-}
-
-func (fs *FileStore) Get(id string) (string, error) {
-	return fs.memoryStore.Get(id)
-}
-
 func (fs *FileStore) Close() error {
 	return fs.producer.Close()
 }
 
 func (fs *FileStore) Load() error {
-	consumer, err := file.NewConsumer(fs.fileName)
+	consumer, err := NewConsumer(fs.fileName)
 	if err != nil {
 		return fmt.Errorf("create consumer: %w", err)
 	}
@@ -67,7 +54,7 @@ func (fs *FileStore) Load() error {
 			continue
 		}
 
-		fs.memoryStore.urls[urlData.ShortURL] = urlData.OriginalURL
+		fs.memoryStore.Load(urlData.ShortURL, urlData.OriginalURL)
 	}
 	return nil
 }

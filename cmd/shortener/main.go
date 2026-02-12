@@ -5,10 +5,9 @@ import (
 	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"
 	"github.com/Arturikou/urlshortener/internal/logging"
-	"github.com/Arturikou/urlshortener/internal/repository"
-	"github.com/Arturikou/urlshortener/internal/repository/postgres"
 	"github.com/Arturikou/urlshortener/internal/router"
 	"github.com/Arturikou/urlshortener/internal/service/shortener"
+	"github.com/Arturikou/urlshortener/internal/storage"
 	"go.uber.org/zap"
 	"log"
 	"net/http"
@@ -25,29 +24,18 @@ func main() {
 	defer l.Sync()
 	sl := l.Sugar()
 
-	var repo *postgres.Storage
-	if cfg.Database.DSN != "" {
-		repo, err = postgres.New(ctx, cfg.Database.DSN)
-		if err != nil {
-			sl.Fatalf("can't initialize database: %v", err)
-		}
-		defer repo.Close()
-	}
-
-	memoryStorage := repository.NewMemoryStore()
-	fileStorage, err := repository.NewFileStore(cfg.FileStoragePath, memoryStorage, sl)
+	st, err := storage.New(ctx, cfg, sl)
 	if err != nil {
-		sl.Fatalf("failed to initialize file store: %v", err)
-	}
-	defer fileStorage.Close()
-
-	if err := fileStorage.Load(); err != nil {
-		sl.Warnf("could not restore data from file: %v", err)
+		sl.Fatalf("failed to init st: %v", err)
 	}
 
-	urlService := shortener.New(fileStorage, sl)
+	if st.Closer != nil {
+		defer st.Closer()
+	}
 
-	h := handlers.New(urlService, repo, cfg.Handlers, sl)
+	urlService := shortener.New(st.URLRepo, sl)
+
+	h := handlers.New(urlService, st.Pinger, cfg.Handlers, sl)
 	r := router.New(h, l)
 
 	srv := &http.Server{

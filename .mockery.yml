@@ -1,5 +1,5 @@
 with-expecter: true
-all: true
+all: false
 
 packages:
   github.com/Arturikou/urlshortener/internal/handlers:
@@ -9,4 +9,17 @@ packages:
       filename: "{{.InterfaceName | snakecase}}_mock.go"
     interfaces:
       URLService: {}
-      Repo: {}
+  github.com/Arturikou/urlshortener/internal/service/shortener:
+    config:
+      dir: "mocks"
+      outpkg: "mocks"
+      filename: "{{.InterfaceName | snakecase}}_mock.go"
+    interfaces:
+      Repository: {}
+  github.com/Arturikou/urlshortener/internal/storage/pinger:
+    config:
+      dir: "mocks"
+      outpkg: "mocks"
+      filename: "{{.InterfaceName | snakecase}}_mock.go"
+    interfaces:
+      Pinger: {}

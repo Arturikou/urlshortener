@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"errors"
-	"github.com/Arturikou/urlshortener/internal/repository"
+	"github.com/Arturikou/urlshortener/internal/models"
 	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
@@ -23,16 +23,16 @@ func (h *Handlers) AddURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	originalURL := strings.TrimSpace(string(body))
-	id, err := h.urlService.AddURL(originalURL)
+	alias, err := h.urlService.AddURL(r.Context(), originalURL)
 	if err != nil {
 		h.logger.Errorw("failed to add URL", "url", originalURL, "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	shortURL, err := url.JoinPath(h.cfg.BaseAddr, id)
+	shortURL, err := url.JoinPath(h.cfg.BaseAddr, alias)
 	if err != nil {
-		h.logger.Errorw("failed to build short URL path", "base", h.cfg.BaseAddr, "id", id, "error", err)
+		h.logger.Errorw("failed to build short URL path", "base", h.cfg.BaseAddr, "alias", alias, "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -46,21 +46,21 @@ func (h *Handlers) AddURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) GetURL(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	alias := chi.URLParam(r, "alias")
 
-	if id == "" {
-		http.Error(w, "id is required", http.StatusBadRequest)
+	if alias == "" {
+		http.Error(w, "alias is required", http.StatusBadRequest)
 		return
 	}
 
-	originalURL, err := h.urlService.GetURL(id)
+	originalURL, err := h.urlService.GetURL(r.Context(), alias)
 	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
+		if errors.Is(err, models.ErrNotFound) {
 			http.Error(w, "shortener not found", http.StatusNotFound)
 			return
 		}
 
-		h.logger.Errorw("database error during GetURL", "id", id, "error", err)
+		h.logger.Errorw("database error during GetURL", "alias", alias, "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

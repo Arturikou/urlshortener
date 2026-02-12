@@ -29,7 +29,7 @@ func (h *Handlers) Shorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.urlService.AddURL(req.URL)
+	id, err := h.urlService.AddURL(r.Context(), req.URL)
 	if err != nil {
 		h.logger.Errorw("error add shortening URL", "url", req.URL, "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -38,7 +38,7 @@ func (h *Handlers) Shorten(w http.ResponseWriter, r *http.Request) {
 
 	shortURL, err := url.JoinPath(h.cfg.BaseAddr, id)
 	if err != nil {
-		h.logger.Errorw("failed to build short URL path", "base", h.cfg.BaseAddr, "id", id, "error", err)
+		h.logger.Errorw("failed to build short URL path", "base", h.cfg.BaseAddr, "alias", id, "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
