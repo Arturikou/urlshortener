@@ -5,18 +5,21 @@ import (
 )
 
 type Store struct {
-	mu   sync.RWMutex
-	urls map[string]string
+	mu         sync.RWMutex
+	aliasToURL map[string]string
+	urlToAlias map[string]string
 }
 
 func NewMemoryStore() *Store {
 	return &Store{
-		urls: make(map[string]string),
+		aliasToURL: make(map[string]string),
+		urlToAlias: make(map[string]string),
 	}
 }
 
-func (s *Store) Load(shortURL, originalURL string) {
+func (s *Store) Load(alias, originalURL string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.urls[shortURL] = originalURL
+	s.aliasToURL[alias] = originalURL
+	s.urlToAlias[originalURL] = alias
 }

@@ -54,7 +54,7 @@ func (fs *FileStore) Load() error {
 			continue
 		}
 
-		fs.memoryStore.Load(urlData.ShortURL, urlData.OriginalURL)
+		fs.memoryStore.Load(urlData.Alias, urlData.OriginalURL)
 	}
 	return nil
 }

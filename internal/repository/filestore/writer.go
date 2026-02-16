@@ -1,13 +1,16 @@
 package filestore
 
 import (
+	"bufio"
 	"encoding/json"
 	"github.com/Arturikou/urlshortener/internal/models"
+	"github.com/Arturikou/urlshortener/internal/service/shortener"
 	"os"
 )
 
 type Producer struct {
 	file    *os.File
+	writer  *bufio.Writer
 	encoder *json.Encoder
 }
 
@@ -17,14 +20,34 @@ func NewProducer(fileName string) (*Producer, error) {
 		return nil, err
 	}
 
+	writer := bufio.NewWriter(file)
 	return &Producer{
 		file:    file,
-		encoder: json.NewEncoder(file),
+		writer:  writer,
+		encoder: json.NewEncoder(writer),
 	}, nil
 }
 
 func (p *Producer) WriteEvent(record *models.URLData) error {
-	return p.encoder.Encode(record)
+	if err := p.encoder.Encode(record); err != nil {
+		return err
+	}
+
+	return p.writer.Flush()
+}
+
+func (p *Producer) WriteBatch(records []*shortener.ShortenBatch) error {
+	for _, rec := range records {
+		event := models.URLData{
+			OriginalURL: rec.OriginalURL,
+			Alias:       rec.Alias,
+		}
+		if err := p.encoder.Encode(event); err != nil {
+			return err
+		}
+	}
+
+	return p.writer.Flush()
 }
 
 func (p *Producer) Close() error {

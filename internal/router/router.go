@@ -24,6 +24,7 @@ func New(h *handlers.Handlers, l *zap.Logger) *chi.Mux {
 		})
 		r.Route("/api", func(r chi.Router) {
 			r.Post("/shorten", h.Shorten)
+			r.Post("/shorten/batch", h.ShortenBatch)
 		})
 	})
 

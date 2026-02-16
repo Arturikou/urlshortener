@@ -55,10 +55,10 @@ func New(ctx context.Context, dsn string) (*Repo, error) {
 	}, nil
 }
 
-func (s *Repo) Close() {
-	s.pool.Close()
+func (r *Repo) Close() {
+	r.pool.Close()
 }
 
-func (s *Repo) Ping(ctx context.Context) error {
-	return s.pool.Ping(ctx)
+func (r *Repo) Ping(ctx context.Context) error {
+	return r.pool.Ping(ctx)
 }

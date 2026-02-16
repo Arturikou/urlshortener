@@ -5,34 +5,70 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Arturikou/urlshortener/internal/models"
+	"github.com/Arturikou/urlshortener/internal/service/shortener"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-func (s *Repo) Save(ctx context.Context, record *models.URLData) error {
-	query := `INSERT INTO url (url, alias) VALUES ($1, $2)`
+func (r *Repo) Save(ctx context.Context, record models.URLData) (actualAlias string, err error) {
+	query := `
+		INSERT INTO url (url, alias) 
+        VALUES ($1, $2) 
+        ON CONFLICT (url) DO UPDATE SET url = EXCLUDED.url 
+        RETURNING alias`
 
-	_, err := s.pool.Exec(ctx, query, record.OriginalURL, record.ShortURL)
+	err = r.pool.QueryRow(ctx, query, record.OriginalURL, record.Alias).Scan(&actualAlias)
 	if err != nil {
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == pgerrcode.UniqueViolation {
-				return models.ErrAlreadyExists
-			}
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return "", models.ErrAlreadyExists
 		}
 
-		return fmt.Errorf("failed to insert: %w", err)
+		return "", fmt.Errorf("failed to insert: %w", err)
 	}
 
-	return nil
+	return actualAlias, nil
 }
 
-func (s *Repo) Get(ctx context.Context, alias string) (string, error) {
+func (r *Repo) SaveBatch(ctx context.Context, data []*shortener.ShortenBatch) ([]*shortener.ShortenBatch, error) {
+	batch := &pgx.Batch{}
+
+	for _, rec := range data {
+		batch.Queue(`
+            INSERT INTO url (url, alias) 
+            VALUES ($1, $2) 
+            ON CONFLICT (url) DO UPDATE SET url = EXCLUDED.url 
+            RETURNING alias`, rec.OriginalURL, rec.Alias)
+	}
+
+	br := r.pool.SendBatch(ctx, batch)
+	defer br.Close()
+
+	for i := 0; i < len(data); i++ {
+		var actualAlias string
+		err := br.QueryRow().Scan(&actualAlias)
+
+		if err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+				return data[i:], nil
+			}
+
+			return nil, fmt.Errorf("batch scan error at index %d: %w", i, err)
+		}
+
+		data[i].Alias = actualAlias
+	}
+
+	return nil, nil
+}
+
+func (r *Repo) Get(ctx context.Context, alias string) (string, error) {
 	var originalURL string
 	query := `SELECT url FROM url WHERE alias = $1`
 
-	err := s.pool.QueryRow(ctx, query, alias).Scan(&originalURL)
+	err := r.pool.QueryRow(ctx, query, alias).Scan(&originalURL)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return "", models.ErrNotFound
@@ -40,5 +76,5 @@ func (s *Repo) Get(ctx context.Context, alias string) (string, error) {
 		return "", fmt.Errorf("failed to get alias: %w", err)
 	}
 
-	return alias, nil
+	return originalURL, nil
 }
