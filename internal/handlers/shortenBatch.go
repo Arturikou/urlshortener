@@ -65,6 +65,10 @@ func (h *Handlers) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(shortenBatchResp)
+	err = json.NewEncoder(w).Encode(shortenBatchResp)
+	if err != nil {
+		h.logger.Errorw("error encoding response", "error", err)
+		return
+	}
 
 }

@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
+	"github.com/Arturikou/urlshortener/internal/models"
 	"net/http"
 	"net/url"
 )
@@ -29,16 +31,18 @@ func (h *Handlers) Shorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.urlService.AddURL(r.Context(), req.URL)
-	if err != nil {
+	alias, err := h.urlService.AddURL(r.Context(), req.URL)
+	isConflict := errors.Is(err, models.ErrURLAlreadyExists)
+
+	if err != nil && !isConflict {
 		h.logger.Errorw("error add shortening URL", "url", req.URL, "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	shortURL, err := url.JoinPath(h.cfg.BaseAddr, id)
+	shortURL, err := url.JoinPath(h.cfg.BaseAddr, alias)
 	if err != nil {
-		h.logger.Errorw("failed to build short URL path", "base", h.cfg.BaseAddr, "alias", id, "error", err)
+		h.logger.Errorw("failed to build short URL path", "base", h.cfg.BaseAddr, "alias", alias, "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
@@ -48,7 +52,11 @@ func (h *Handlers) Shorten(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	if isConflict {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
 
 	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {

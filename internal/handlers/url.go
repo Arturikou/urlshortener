@@ -24,7 +24,9 @@ func (h *Handlers) AddURL(w http.ResponseWriter, r *http.Request) {
 
 	originalURL := strings.TrimSpace(string(body))
 	alias, err := h.urlService.AddURL(r.Context(), originalURL)
-	if err != nil {
+	isConflict := errors.Is(err, models.ErrURLAlreadyExists)
+
+	if err != nil && !isConflict {
 		h.logger.Errorw("failed to add URL", "url", originalURL, "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -38,7 +40,12 @@ func (h *Handlers) AddURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusCreated)
+	if isConflict {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
+
 	_, err = w.Write([]byte(shortURL))
 	if err != nil {
 		h.logger.Errorw("failed to write body", "url", originalURL, "error", err)

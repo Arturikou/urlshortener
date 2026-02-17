@@ -11,24 +11,31 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-func (r *Repo) Save(ctx context.Context, record models.URLData) (actualAlias string, err error) {
-	query := `
-		INSERT INTO url (url, alias) 
-        VALUES ($1, $2) 
-        ON CONFLICT (url) DO UPDATE SET url = EXCLUDED.url 
-        RETURNING alias`
+func (r *Repo) Save(ctx context.Context, record models.URLData) (string, error) {
+	query := `INSERT INTO url (url, alias) VALUES ($1, $2)`
 
-	err = r.pool.QueryRow(ctx, query, record.OriginalURL, record.Alias).Scan(&actualAlias)
+	_, err := r.pool.Exec(ctx, query, record.OriginalURL, record.Alias)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
-			return "", models.ErrAlreadyExists
-		}
 
+			if pgErr.ConstraintName == "url_url_key" {
+				var actualAlias string
+				errSelect := r.pool.QueryRow(ctx, `SELECT alias FROM url WHERE url = $1`, record.OriginalURL).Scan(&actualAlias)
+				if errSelect != nil {
+					return "", fmt.Errorf("failed to get alias: %w", errSelect)
+				}
+				return actualAlias, models.ErrURLAlreadyExists
+			}
+
+			if pgErr.ConstraintName == "url_alias_key" {
+				return "", models.ErrAliasAlreadyExists
+			}
+		}
 		return "", fmt.Errorf("failed to insert: %w", err)
 	}
 
-	return actualAlias, nil
+	return record.Alias, nil
 }
 
 func (r *Repo) SaveBatch(ctx context.Context, data []*shortener.ShortenBatch) ([]*shortener.ShortenBatch, error) {

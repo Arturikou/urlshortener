@@ -50,12 +50,15 @@ func (s *Shortener) AddURL(ctx context.Context, originalURL string) (string, err
 		}
 
 		actualAlias, err := s.repo.Save(ctx, urlData)
-
 		if err == nil {
 			return actualAlias, nil
 		}
 
-		if errors.Is(err, models.ErrAlreadyExists) {
+		if errors.Is(err, models.ErrURLAlreadyExists) {
+			return actualAlias, err
+		}
+
+		if errors.Is(err, models.ErrAliasAlreadyExists) {
 			continue
 		}
 

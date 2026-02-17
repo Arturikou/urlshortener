@@ -15,7 +15,7 @@ func (s *Store) Save(ctx context.Context, urlData models.URLData) (string, error
 	}
 
 	if _, ok := s.aliasToURL[urlData.Alias]; ok {
-		return "", models.ErrAlreadyExists
+		return "", models.ErrAliasAlreadyExists
 	}
 
 	s.urlToAlias[urlData.OriginalURL] = urlData.Alias

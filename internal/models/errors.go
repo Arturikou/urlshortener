@@ -3,6 +3,7 @@ package models
 import "errors"
 
 var (
-	ErrAlreadyExists = errors.New("already exists")
-	ErrNotFound      = errors.New("not found")
+	ErrAliasAlreadyExists = errors.New("alias already exists")
+	ErrURLAlreadyExists   = errors.New("url already exists")
+	ErrNotFound           = errors.New("not found")
 )
