@@ -6,6 +6,7 @@ import (
 	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"
 	"github.com/Arturikou/urlshortener/internal/handlers/mocks"
+	"github.com/Arturikou/urlshortener/internal/service/shortener"
 	pinger "github.com/Arturikou/urlshortener/internal/storage/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -58,7 +59,8 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 func TestRouter_AddURL(t *testing.T) {
 	cfg := config.HandlersConfig{BaseAddr: "http://localhost:8080"}
 	mockService := new(mocks.MockURLService)
-	mockService.On("AddURL", mock.Anything, "https://practicum.yandex.ru").Return("EwHXdJfB", nil)
+	mockService.On("AddURL", mock.Anything, "https://practicum.yandex.ru").
+		Return(shortener.AddURLResult{Alias: "EwHXdJfB", IsInsert: true}, nil).Once()
 	mockPinger := pinger.NewMockPinger(t)
 
 	logger := zap.NewNop()
@@ -96,8 +98,8 @@ func TestRouter_GetURL(t *testing.T) {
 func TestRouter_ShortenURL(t *testing.T) {
 	cfg := config.HandlersConfig{BaseAddr: "http://localhost:8080"}
 	mockService := new(mocks.MockURLService)
-	mockService.On("AddURL", mock.Anything, mock.Anything).
-		Return("EwHXdJfB", nil).Once()
+	mockService.On("AddURL", mock.Anything, "https://practicum.yandex.ru").
+		Return(shortener.AddURLResult{Alias: "EwHXdJfB", IsInsert: true}, nil).Once()
 	mockPinger := pinger.NewMockPinger(t)
 
 	logger := zap.NewNop()

@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"github.com/Arturikou/urlshortener/internal/config"
+	"github.com/Arturikou/urlshortener/internal/models"
 	"github.com/Arturikou/urlshortener/internal/service/shortener"
 	"github.com/Arturikou/urlshortener/internal/storage"
 	"go.uber.org/zap"
@@ -10,9 +11,9 @@ import (
 
 //go:generate mockery
 type URLService interface {
-	AddURL(ctx context.Context, url string) (string, error)
+	AddURL(ctx context.Context, originalURL string) (shortener.AddURLResult, error)
 	GetURL(ctx context.Context, alias string) (string, error)
-	AddURLs(ctx context.Context, shortenBatch []*shortener.ShortenBatch) ([]shortener.ShortenBatch, error)
+	AddURLs(ctx context.Context, shortenBatch []*models.ShortenBatch) ([]models.ShortenBatch, error)
 }
 
 type Handlers struct {

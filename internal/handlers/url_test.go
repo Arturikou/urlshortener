@@ -6,6 +6,7 @@ import (
 	"github.com/Arturikou/urlshortener/internal/handlers"
 	"github.com/Arturikou/urlshortener/internal/handlers/mocks"
 	"github.com/Arturikou/urlshortener/internal/models"
+	"github.com/Arturikou/urlshortener/internal/service/shortener"
 	pinger "github.com/Arturikou/urlshortener/internal/storage/mocks"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +23,7 @@ func TestHandlers_AddURL(t *testing.T) {
 	logger := zap.NewNop().Sugar()
 
 	type mockData struct {
-		returnID  string
+		result    shortener.AddURLResult
 		returnErr error
 	}
 
@@ -39,10 +40,10 @@ func TestHandlers_AddURL(t *testing.T) {
 		want want
 	}{
 		{
-			name: "Success",
+			name: "Success Created",
 			body: "https://practicum.yandex.ru",
 			mock: mockData{
-				returnID:  "EwHXdJfB",
+				result:    shortener.AddURLResult{Alias: "EwHXdJfB", IsInsert: true},
 				returnErr: nil,
 			},
 			want: want{
@@ -52,12 +53,22 @@ func TestHandlers_AddURL(t *testing.T) {
 			},
 		},
 		{
-			name: "Empty body",
-			body: "",
+			name: "Success Conflict",
+			body: "https://practicum.yandex.ru",
 			mock: mockData{
-				returnID:  "EwHXdJfB",
+				result:    shortener.AddURLResult{Alias: "EwHXdJfB", IsInsert: false},
 				returnErr: nil,
 			},
+			want: want{
+				code:        http.StatusConflict,
+				response:    "http://localhost:8080/EwHXdJfB",
+				contentType: "text/plain",
+			},
+		},
+		{
+			name: "Empty body",
+			body: "",
+			mock: mockData{},
 			want: want{
 				code:        http.StatusBadRequest,
 				response:    "empty body",
@@ -68,7 +79,7 @@ func TestHandlers_AddURL(t *testing.T) {
 			name: "Error from service",
 			body: "https://practicum.yandex.ru",
 			mock: mockData{
-				returnID:  "",
+				result:    shortener.AddURLResult{},
 				returnErr: errors.New("error"),
 			},
 			want: want{
@@ -81,13 +92,15 @@ func TestHandlers_AddURL(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mockService := new(mocks.MockURLService)
-			mockService.
-				On("AddURL", mock.Anything, test.body).
-				Return(test.mock.returnID, test.mock.returnErr)
+			if test.body != "" {
+				mockService.
+					On("AddURL", mock.Anything, test.body).
+					Return(test.mock.result, test.mock.returnErr).Once()
+			}
 
 			mockPinger := pinger.NewMockPinger(t)
-
 			h := handlers.New(mockService, mockPinger, cfg, logger)
+
 			r := chi.NewRouter()
 			r.Post("/", h.AddURL)
 
@@ -99,6 +112,8 @@ func TestHandlers_AddURL(t *testing.T) {
 			assert.Equal(t, test.want.code, w.Code)
 			assert.Equal(t, test.want.response, strings.TrimSpace(w.Body.String()))
 			assert.Contains(t, w.Header().Get("Content-Type"), test.want.contentType)
+
+			mockService.AssertExpectations(t)
 		})
 	}
 }

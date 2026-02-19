@@ -4,30 +4,28 @@ import (
 	"context"
 	"fmt"
 	"github.com/Arturikou/urlshortener/internal/models"
-	"github.com/Arturikou/urlshortener/internal/service/shortener"
 )
 
-func (fs *FileStore) Save(ctx context.Context, urlData models.URLData) (string, error) {
-	actualAlias, err := fs.memoryStore.Save(ctx, urlData)
+func (fs *FileStore) InsertOrGetAlias(ctx context.Context, urlData models.URLData) (models.UpsertResult, error) {
+	upsertResult, err := fs.memoryStore.InsertOrGetAlias(ctx, urlData)
 	if err != nil {
-		return "", err
+		return models.UpsertResult{}, err
 	}
 
-	if actualAlias != urlData.Alias {
-		return actualAlias, nil
+	if !upsertResult.IsInsert {
+		return upsertResult, nil
 	}
 
-	urlData.Alias = actualAlias
-
-	if err := fs.producer.WriteEvent(&urlData); err != nil {
+	if err = fs.producer.WriteEvent(&urlData); err != nil {
 		_ = fs.memoryStore.Delete(ctx, &urlData)
-		return "", fmt.Errorf("file save: %w", err)
+
+		return models.UpsertResult{}, fmt.Errorf("filestore fix record: %w", err)
 	}
 
-	return urlData.Alias, nil
+	return upsertResult, nil
 }
 
-func (fs *FileStore) SaveBatch(ctx context.Context, data []*shortener.ShortenBatch) ([]*shortener.ShortenBatch, error) {
+func (fs *FileStore) SaveBatch(ctx context.Context, data []*models.ShortenBatch) ([]*models.ShortenBatch, error) {
 	remaining, err := fs.memoryStore.SaveBatch(ctx, data)
 	if err != nil {
 		return nil, fmt.Errorf("fail to memory save: %w", err)
@@ -43,6 +41,6 @@ func (fs *FileStore) SaveBatch(ctx context.Context, data []*shortener.ShortenBat
 	return remaining, nil
 }
 
-func (fs *FileStore) Get(ctx context.Context, id string) (string, error) {
-	return fs.memoryStore.Get(ctx, id)
+func (fs *FileStore) GetURLByAlias(ctx context.Context, id string) (string, error) {
+	return fs.memoryStore.GetURLByAlias(ctx, id)
 }

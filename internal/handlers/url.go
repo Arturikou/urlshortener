@@ -23,27 +23,26 @@ func (h *Handlers) AddURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	originalURL := strings.TrimSpace(string(body))
-	alias, err := h.urlService.AddURL(r.Context(), originalURL)
-	isConflict := errors.Is(err, models.ErrURLAlreadyExists)
-
-	if err != nil && !isConflict {
+	addResult, err := h.urlService.AddURL(r.Context(), originalURL)
+	if err != nil {
 		h.logger.Errorw("failed to add URL", "url", originalURL, "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	shortURL, err := url.JoinPath(h.cfg.BaseAddr, alias)
+	shortURL, err := url.JoinPath(h.cfg.BaseAddr, addResult.Alias)
 	if err != nil {
-		h.logger.Errorw("failed to build short URL path", "base", h.cfg.BaseAddr, "alias", alias, "error", err)
+		h.logger.Errorw("failed to build short URL path", "base", h.cfg.BaseAddr, "alias", addResult.Alias, "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
-	if isConflict {
-		w.WriteHeader(http.StatusConflict)
-	} else {
+
+	if addResult.IsInsert {
 		w.WriteHeader(http.StatusCreated)
+	} else {
+		w.WriteHeader(http.StatusConflict)
 	}
 
 	_, err = w.Write([]byte(shortURL))

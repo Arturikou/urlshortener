@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/Arturikou/urlshortener/internal/service/shortener"
+	"github.com/Arturikou/urlshortener/internal/models"
 	"net/http"
 	"net/url"
 )
@@ -33,9 +33,9 @@ func (h *Handlers) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortenBatch := make([]*shortener.ShortenBatch, len(req))
+	shortenBatch := make([]*models.ShortenBatch, len(req))
 	for idx, reqItem := range req {
-		shortenBatch[idx] = &shortener.ShortenBatch{
+		shortenBatch[idx] = &models.ShortenBatch{
 			CorrelationID: reqItem.CorrelationID,
 			OriginalURL:   reqItem.OriginalURL,
 		}

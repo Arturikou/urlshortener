@@ -7,6 +7,7 @@ import (
 	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"
 	"github.com/Arturikou/urlshortener/internal/handlers/mocks"
+	"github.com/Arturikou/urlshortener/internal/service/shortener"
 	pinger "github.com/Arturikou/urlshortener/internal/storage/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -34,16 +35,31 @@ func TestHandlers_Shorten(t *testing.T) {
 		want         want
 	}{
 		{
-			name: "success",
+			name: "success created",
 			body: handlers.ShortenReq{
 				URL: "https://practicum.yandex.ru",
 			},
 			setupService: func(m *mocks.MockURLService) {
-				m.On("AddURL", mock.Anything, mock.Anything).
-					Return("/EwHXdJfB", nil).Once()
+				m.On("AddURL", mock.Anything, "https://practicum.yandex.ru").
+					Return(shortener.AddURLResult{Alias: "EwHXdJfB", IsInsert: true}, nil).Once()
 			},
 			want: want{
 				code:        http.StatusCreated,
+				contentType: "application/json",
+				result:      "http://localhost:8080/EwHXdJfB",
+			},
+		},
+		{
+			name: "success conflict",
+			body: handlers.ShortenReq{
+				URL: "https://practicum.yandex.ru",
+			},
+			setupService: func(m *mocks.MockURLService) {
+				m.On("AddURL", mock.Anything, "https://practicum.yandex.ru").
+					Return(shortener.AddURLResult{Alias: "EwHXdJfB", IsInsert: false}, nil).Once()
+			},
+			want: want{
+				code:        http.StatusConflict,
 				contentType: "application/json",
 				result:      "http://localhost:8080/EwHXdJfB",
 			},
@@ -75,7 +91,7 @@ func TestHandlers_Shorten(t *testing.T) {
 			},
 			setupService: func(m *mocks.MockURLService) {
 				m.On("AddURL", mock.Anything, mock.Anything).
-					Return("", errors.New("error")).Once()
+					Return(shortener.AddURLResult{}, errors.New("internal error")).Once()
 			},
 			want: want{
 				code:        http.StatusInternalServerError,
@@ -100,7 +116,7 @@ func TestHandlers_Shorten(t *testing.T) {
 			h.Shorten(recorder, request)
 
 			assert.Equal(t, test.want.code, recorder.Code)
-			assert.Equal(t, test.want.contentType, recorder.Header().Get("Content-Type"))
+			assert.Contains(t, recorder.Header().Get("Content-Type"), test.want.contentType)
 
 			if test.want.result != "" {
 				var res handlers.ShortenResp

@@ -8,6 +8,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"strings"
 	"time"
 )
 
@@ -18,7 +19,7 @@ type Repo struct {
 const migrationsPath = "file://migrations"
 
 func runMigrations(dsn string, migrationsPath string) error {
-	dsn = "pgx5" + dsn[8:]
+	dsn = "pgx5://" + strings.TrimPrefix(dsn, "postgres://")
 	m, err := migrate.New(migrationsPath, dsn)
 	if err != nil {
 		return fmt.Errorf("could not create migrate instance: %w", err)
