@@ -17,14 +17,14 @@ func New(h *handlers.Handlers, l *zap.Logger) *chi.Mux {
 	r.Use(mw.Gzip)
 
 	r.Route("/", func(r chi.Router) {
-		r.Get("/ping", h.Ping)
-		r.Post("/", h.AddURL)
-		r.Route("/{alias}", func(r chi.Router) {
-			r.Get("/", h.GetURL)
-		})
+		r.With(mw.OptionalAuth).Get("/ping", h.Ping)
+		r.With(mw.OptionalAuth).Post("/", h.AddURL)
+		r.With(mw.OptionalAuth).Get("/{alias}", h.GetURL)
+
 		r.Route("/api", func(r chi.Router) {
-			r.Post("/shorten", h.Shorten)
-			r.Post("/shorten/batch", h.ShortenBatch)
+			r.With(mw.OptionalAuth).Post("/shorten", h.Shorten)
+			r.With(mw.OptionalAuth).Post("/shorten/batch", h.ShortenBatch)
+			r.With(mw.RequireAuth).Get("/user/urls", h.UserUrls)
 		})
 	})
 

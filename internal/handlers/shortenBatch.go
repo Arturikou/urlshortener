@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/Arturikou/urlshortener/internal/models"
 	"net/http"
 	"net/url"
+
+	"github.com/Arturikou/urlshortener/internal/models"
 )
 
 type ShortenBatchReq struct {
@@ -70,5 +71,4 @@ func (h *Handlers) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 		h.logger.Errorw("error encoding response", "error", err)
 		return
 	}
-
 }

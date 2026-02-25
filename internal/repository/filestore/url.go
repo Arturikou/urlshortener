@@ -3,23 +3,21 @@ package filestore
 import (
 	"context"
 	"fmt"
+
 	"github.com/Arturikou/urlshortener/internal/models"
+	"github.com/google/uuid"
 )
 
-func (fs *FileStore) InsertOrGetAlias(ctx context.Context, urlData models.URLData) (models.UpsertResult, error) {
-	upsertResult, err := fs.memoryStore.InsertOrGetAlias(ctx, urlData)
+func (fs *FileStore) AddURL(ctx context.Context, data models.URLData) (int64, error) {
+	upsertResult, err := fs.memoryStore.AddURL(ctx, data)
 	if err != nil {
-		return models.UpsertResult{}, err
+		return 0, fmt.Errorf("filestore add url: %w", err)
 	}
 
-	if !upsertResult.IsInsert {
-		return upsertResult, nil
-	}
+	if err = fs.producer.WriteEvent(&data); err != nil {
+		_ = fs.memoryStore.Delete(ctx, &data)
 
-	if err = fs.producer.WriteEvent(&urlData); err != nil {
-		_ = fs.memoryStore.Delete(ctx, &urlData)
-
-		return models.UpsertResult{}, fmt.Errorf("filestore fix record: %w", err)
+		return 0, fmt.Errorf("filestore write event: %w", err)
 	}
 
 	return upsertResult, nil
@@ -43,4 +41,16 @@ func (fs *FileStore) SaveBatch(ctx context.Context, data []*models.ShortenBatch)
 
 func (fs *FileStore) GetURLByAlias(ctx context.Context, id string) (string, error) {
 	return fs.memoryStore.GetURLByAlias(ctx, id)
+}
+
+func (fs *FileStore) GetByURL(ctx context.Context, url string) (models.URLRecord, error) {
+	return fs.memoryStore.GetByURL(ctx, url)
+}
+
+func (fs *FileStore) GetUserURLs(ctx context.Context, userID uuid.UUID) ([]models.UserUrls, error) {
+	return fs.memoryStore.GetUserURLs(ctx, userID)
+}
+
+func (fs *FileStore) AddUserURL(_ context.Context, _ uuid.UUID, _ int64) error {
+	return nil
 }

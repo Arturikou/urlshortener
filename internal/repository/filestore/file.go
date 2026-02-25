@@ -1,10 +1,12 @@
 package filestore
 
 import (
+	"context"
 	"fmt"
+	"io"
+
 	"github.com/Arturikou/urlshortener/internal/repository/memory"
 	"go.uber.org/zap"
-	"io"
 )
 
 type FileStore struct {
@@ -57,4 +59,8 @@ func (fs *FileStore) Load() error {
 		fs.memoryStore.Load(urlData.Alias, urlData.OriginalURL)
 	}
 	return nil
+}
+
+func (fs *FileStore) Transaction(_ context.Context, fn func(ctx context.Context) error) error {
+	return fn(context.Background())
 }

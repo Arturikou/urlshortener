@@ -15,7 +15,8 @@ packages:
       outpkg: "mocks"
       filename: "{{.InterfaceName | snakecase}}_mock.go"
     interfaces:
-      Repository: {}
+      URLRepo: {}
+      UserURLRepo: {}
   github.com/Arturikou/urlshortener/internal/storage/pinger:
     config:
       dir: "mocks"

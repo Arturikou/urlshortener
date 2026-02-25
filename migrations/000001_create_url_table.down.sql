@@ -2,4 +2,4 @@
 -- Rollback url database
 
 DROP INDEX IF EXISTS idx_url_alias;
-DROP TABLE IF EXISTS url;
+DROP TABLE IF EXISTS url CASCADE;

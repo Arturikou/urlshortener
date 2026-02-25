@@ -6,28 +6,48 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+
+	"github.com/Arturikou/urlshortener/internal/middleware"
 	"github.com/Arturikou/urlshortener/internal/models"
+	"github.com/Arturikou/urlshortener/internal/transactor"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
 const defaultMaxRetries = 10
 
 //go:generate mockery
-type Repository interface {
-	InsertOrGetAlias(ctx context.Context, data models.URLData) (models.UpsertResult, error)
+type URLRepo interface {
+	AddURL(ctx context.Context, data models.URLData) (int64, error)
+	GetByURL(ctx context.Context, url string) (models.URLRecord, error)
 	GetURLByAlias(ctx context.Context, alias string) (string, error)
 	SaveBatch(ctx context.Context, data []*models.ShortenBatch) ([]*models.ShortenBatch, error)
 }
 
-type Shortener struct {
-	repo   Repository
-	logger *zap.SugaredLogger
+//go:generate mockery
+type UserURLRepo interface {
+	AddUserURL(ctx context.Context, userID uuid.UUID, urlID int64) error
+	GetUserURLs(ctx context.Context, userID uuid.UUID) ([]models.UserUrls, error)
 }
 
-func New(repo Repository, logger *zap.SugaredLogger) *Shortener {
+type Shortener struct {
+	urlRepo     URLRepo
+	userURLRepo UserURLRepo
+	transactor  transactor.Transactor
+	logger      *zap.SugaredLogger
+}
+
+func New(
+	urlRepo URLRepo,
+	userURLRepo UserURLRepo,
+	transactor transactor.Transactor,
+	logger *zap.SugaredLogger,
+) *Shortener {
 	return &Shortener{
-		repo:   repo,
-		logger: logger,
+		urlRepo:     urlRepo,
+		userURLRepo: userURLRepo,
+		transactor:  transactor,
+		logger:      logger,
 	}
 }
 
@@ -37,6 +57,11 @@ type AddURLResult struct {
 }
 
 func (s *Shortener) AddURL(ctx context.Context, originalURL string) (AddURLResult, error) {
+	userID, ok := middleware.UserIDFromContext(ctx)
+	if !ok {
+		return AddURLResult{}, fmt.Errorf("userID not found in context")
+	}
+
 	for i := 0; i < defaultMaxRetries; i++ {
 		alias, err := generateAlias()
 		if err != nil {
@@ -48,12 +73,9 @@ func (s *Shortener) AddURL(ctx context.Context, originalURL string) (AddURLResul
 			Alias:       alias,
 		}
 
-		upsertResult, err := s.repo.InsertOrGetAlias(ctx, urlData)
+		addURLResult, err := s.addUserURL(ctx, userID, urlData)
 		if err == nil {
-			return AddURLResult{
-				Alias:    upsertResult.Alias,
-				IsInsert: upsertResult.IsInsert,
-			}, nil
+			return addURLResult, nil
 		}
 
 		if errors.Is(err, models.ErrAliasAlreadyExists) {
@@ -87,7 +109,7 @@ func (s *Shortener) AddURLs(ctx context.Context, batches []*models.ShortenBatch)
 		retries := 0
 
 		for len(currentBatch) > 0 {
-			remaining, err := s.repo.SaveBatch(ctx, currentBatch)
+			remaining, err := s.urlRepo.SaveBatch(ctx, currentBatch)
 			if err != nil {
 				return nil, fmt.Errorf("failed to save batch: %w", err)
 			}
@@ -120,12 +142,46 @@ func (s *Shortener) AddURLs(ctx context.Context, batches []*models.ShortenBatch)
 }
 
 func (s *Shortener) GetURL(ctx context.Context, alias string) (string, error) {
-	originalURL, err := s.repo.GetURLByAlias(ctx, alias)
+	originalURL, err := s.urlRepo.GetURLByAlias(ctx, alias)
 	if err != nil {
 		return "", fmt.Errorf("can't get alias: %w", err)
 	}
 
 	return originalURL, nil
+}
+
+func (s *Shortener) GetUserURLs(ctx context.Context, userID uuid.UUID) ([]models.UserUrls, error) {
+	return s.userURLRepo.GetUserURLs(ctx, userID)
+}
+
+func (s *Shortener) addUserURL(ctx context.Context, userID uuid.UUID, urlData models.URLData) (AddURLResult, error) {
+	err := s.transactor.Transaction(ctx, func(ctx context.Context) error {
+		urlID, err := s.urlRepo.AddURL(ctx, urlData)
+		if err != nil {
+			return err
+		}
+		return s.userURLRepo.AddUserURL(ctx, userID, urlID)
+	})
+
+	if err == nil {
+		return AddURLResult{Alias: urlData.Alias, IsInsert: true}, nil
+	}
+
+	if errors.Is(err, models.ErrURLAlreadyShorted) {
+		urlRecord, err := s.urlRepo.GetByURL(ctx, urlData.OriginalURL)
+		if err != nil {
+			return AddURLResult{}, err
+		}
+
+		err = s.userURLRepo.AddUserURL(ctx, userID, urlRecord.ID)
+		if err == nil || errors.Is(err, models.ErrURLAlreadyExists) {
+			return AddURLResult{Alias: urlRecord.Alias, IsInsert: false}, nil
+		}
+
+		return AddURLResult{}, fmt.Errorf("can't add user url: %w", err)
+	}
+
+	return AddURLResult{}, err
 }
 
 func generateAlias() (string, error) {

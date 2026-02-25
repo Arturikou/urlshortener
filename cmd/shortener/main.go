@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"log"
+	"net/http"
+
 	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"
 	"github.com/Arturikou/urlshortener/internal/logging"
@@ -9,8 +12,6 @@ import (
 	"github.com/Arturikou/urlshortener/internal/service/shortener"
 	"github.com/Arturikou/urlshortener/internal/storage"
 	"go.uber.org/zap"
-	"log"
-	"net/http"
 )
 
 func main() {
@@ -33,7 +34,7 @@ func main() {
 		defer st.Closer()
 	}
 
-	urlService := shortener.New(st.URLRepo, sl)
+	urlService := shortener.New(st.URLRepo, st.UserURLRepo, st.Transactor, sl)
 
 	h := handlers.New(urlService, st.Pinger, cfg.Handlers, sl)
 	r := router.New(h, l)

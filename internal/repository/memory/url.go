@@ -2,40 +2,41 @@ package memory
 
 import (
 	"context"
+
 	"github.com/Arturikou/urlshortener/internal/models"
+	"github.com/google/uuid"
 )
 
-func (s *Store) InsertOrGetAlias(ctx context.Context, urlData models.URLData) (models.UpsertResult, error) {
+func (s *Store) AddURL(_ context.Context, data models.URLData) (int64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if actualAlias, ok := s.urlToAlias[urlData.OriginalURL]; ok {
-		return models.UpsertResult{
-			Alias:    actualAlias,
-			IsInsert: false,
-		}, nil
+	if _, ok := s.urlToAlias[data.OriginalURL]; ok {
+		return 0, models.ErrURLAlreadyShorted
 	}
 
-	if _, ok := s.aliasToURL[urlData.Alias]; ok {
-		return models.UpsertResult{}, models.ErrAliasAlreadyExists
+	if _, ok := s.aliasToURL[data.Alias]; ok {
+		return 0, models.ErrAliasAlreadyExists
 	}
 
-	s.urlToAlias[urlData.OriginalURL] = urlData.Alias
-	s.aliasToURL[urlData.Alias] = urlData.OriginalURL
+	s.counter++
 
-	return models.UpsertResult{
-		Alias:    urlData.Alias,
-		IsInsert: true,
-	}, nil
+	s.urlToAlias[data.OriginalURL] = models.URLRecord{
+		ID:    s.counter,
+		Alias: data.Alias,
+	}
+	s.aliasToURL[data.Alias] = data.OriginalURL
+
+	return s.counter, nil
 }
 
-func (s *Store) SaveBatch(ctx context.Context, data []*models.ShortenBatch) ([]*models.ShortenBatch, error) {
+func (s *Store) SaveBatch(_ context.Context, data []*models.ShortenBatch) ([]*models.ShortenBatch, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	for idx, v := range data {
 		if existingAlias, ok := s.urlToAlias[v.OriginalURL]; ok {
-			v.Alias = existingAlias
+			v.Alias = existingAlias.Alias
 			continue
 		}
 
@@ -43,13 +44,17 @@ func (s *Store) SaveBatch(ctx context.Context, data []*models.ShortenBatch) ([]*
 			return data[idx:], nil
 		}
 
-		s.urlToAlias[v.OriginalURL] = v.Alias
+		s.urlToAlias[v.OriginalURL] = models.URLRecord{
+			ID:    s.counter,
+			Alias: v.Alias,
+		}
+
 		s.aliasToURL[v.Alias] = v.OriginalURL
 	}
 	return nil, nil
 }
 
-func (s *Store) GetURLByAlias(ctx context.Context, alias string) (string, error) {
+func (s *Store) GetURLByAlias(_ context.Context, alias string) (string, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -61,7 +66,19 @@ func (s *Store) GetURLByAlias(ctx context.Context, alias string) (string, error)
 	return url, nil
 }
 
-func (s *Store) Delete(ctx context.Context, urlData *models.URLData) error {
+func (s *Store) GetByURL(_ context.Context, url string) (models.URLRecord, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	data, ok := s.urlToAlias[url]
+	if !ok {
+		return models.URLRecord{}, models.ErrNotFound
+	}
+
+	return data, nil
+}
+
+func (s *Store) Delete(_ context.Context, urlData *models.URLData) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -69,4 +86,12 @@ func (s *Store) Delete(ctx context.Context, urlData *models.URLData) error {
 	delete(s.aliasToURL, urlData.Alias)
 
 	return nil
+}
+
+func (s *Store) AddUserURL(_ context.Context, _ uuid.UUID, _ int64) error {
+	return nil
+}
+
+func (s *Store) GetUserURLs(_ context.Context, _ uuid.UUID) ([]models.UserUrls, error) {
+	return nil, nil
 }

@@ -3,8 +3,10 @@ package storage
 import (
 	"context"
 	"fmt"
+
 	"github.com/Arturikou/urlshortener/internal/repository/filestore"
 	"github.com/Arturikou/urlshortener/internal/repository/memory"
+	"github.com/Arturikou/urlshortener/internal/transactor"
 
 	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/repository/postgres"
@@ -13,9 +15,11 @@ import (
 )
 
 type Storage struct {
-	URLRepo shortener.Repository
-	Pinger  Pinger
-	Closer  func()
+	URLRepo     shortener.URLRepo
+	UserURLRepo shortener.UserURLRepo
+	Transactor  transactor.Transactor
+	Pinger      Pinger
+	Closer      func()
 }
 
 func New(
@@ -28,10 +32,13 @@ func New(
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize database: %w", err)
 		}
+
 		return &Storage{
-			URLRepo: db,
-			Pinger:  db,
-			Closer:  db.Close,
+			URLRepo:     db,
+			UserURLRepo: db,
+			Transactor:  db,
+			Pinger:      db,
+			Closer:      db.Close,
 		}, nil
 	}
 
@@ -45,13 +52,17 @@ func New(
 			return nil, fmt.Errorf("file storage load: %w", err)
 		}
 		return &Storage{
-			URLRepo: fileStore,
-			Closer:  func() { _ = fileStore.Close() },
+			URLRepo:     fileStore,
+			UserURLRepo: memoryStore,
+			Transactor:  memoryStore,
+			Closer:      func() { _ = fileStore.Close() },
 		}, nil
 	}
 
 	memoryStore := memory.NewMemoryStore()
 	return &Storage{
-		URLRepo: memoryStore,
+		URLRepo:     memoryStore,
+		UserURLRepo: memoryStore,
+		Transactor:  memoryStore,
 	}, nil
 }

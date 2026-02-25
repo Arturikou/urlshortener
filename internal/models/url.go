@@ -5,6 +5,11 @@ type URLData struct {
 	OriginalURL string `json:"original_url"`
 }
 
+type URLRecord struct {
+	ID    int64  `db:"id"`
+	Alias string `db:"alias"`
+}
+
 type UpsertResult struct {
 	Alias    string
 	IsInsert bool
