@@ -66,28 +66,30 @@ func (db *DB) SaveBatch(ctx context.Context, data []*models.ShortenBatch) ([]*mo
 	return nil, nil
 }
 
-func (db *DB) GetURLByAlias(ctx context.Context, alias string) (string, error) {
-	var originalURL string
-	query := `SELECT url FROM url WHERE alias = $1`
+func (db *DB) GetByAlias(ctx context.Context, alias string) (models.URLRecord, error) {
+	var record models.URLRecord
+	query := `SELECT id, alias, url, is_deleted FROM url WHERE alias = $1`
 
-	err := db.QueryRow(ctx, query, alias).Scan(&originalURL)
+	err := db.QueryRow(ctx, query, alias).Scan(&record.ID, &record.Alias, &record.URL, &record.DeletedFlag)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return "", models.ErrNotFound
+			return models.URLRecord{}, models.ErrNotFound
 		}
-		return "", fmt.Errorf("failed to get alias: %w", err)
+		return models.URLRecord{}, fmt.Errorf("failed to get alias: %w", err)
 	}
-
-	return originalURL, nil
+	return record, nil
 }
 
 func (db *DB) GetByURL(ctx context.Context, url string) (models.URLRecord, error) {
 	var record models.URLRecord
 
-	query := `SELECT id, alias FROM url WHERE url = $1`
-	err := db.QueryRow(ctx, query, url).Scan(&record.ID, &record.Alias)
+	query := `SELECT id, alias, url, is_deleted FROM url WHERE url = $1`
+	err := db.QueryRow(ctx, query, url).Scan(&record.ID, &record.Alias, &record.URL, &record.DeletedFlag)
 	if err != nil {
-		return models.URLRecord{}, fmt.Errorf("failed to get url: %w", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.URLRecord{}, models.ErrNotFound
+		}
+		return models.URLRecord{}, fmt.Errorf("failed to get alias: %w", err)
 	}
 	return record, nil
 }

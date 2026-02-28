@@ -22,8 +22,10 @@ func (s *Store) AddURL(_ context.Context, data models.URLData) (int64, error) {
 	s.counter++
 
 	s.urlToAlias[data.OriginalURL] = models.URLRecord{
-		ID:    s.counter,
-		Alias: data.Alias,
+		ID:          s.counter,
+		Alias:       data.Alias,
+		URL:         data.OriginalURL,
+		DeletedFlag: false,
 	}
 	s.aliasToURL[data.Alias] = data.OriginalURL
 
@@ -54,28 +56,33 @@ func (s *Store) SaveBatch(_ context.Context, data []*models.ShortenBatch) ([]*mo
 	return nil, nil
 }
 
-func (s *Store) GetURLByAlias(_ context.Context, alias string) (string, error) {
+func (s *Store) GetByAlias(_ context.Context, alias string) (models.URLRecord, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	url, ok := s.aliasToURL[alias]
 	if !ok {
-		return "", models.ErrNotFound
+		return models.URLRecord{}, models.ErrNotFound
 	}
 
-	return url, nil
+	record, ok := s.urlToAlias[url]
+	if !ok {
+		return models.URLRecord{}, models.ErrNotFound
+	}
+
+	return record, nil
 }
 
 func (s *Store) GetByURL(_ context.Context, url string) (models.URLRecord, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	data, ok := s.urlToAlias[url]
+	record, ok := s.urlToAlias[url]
 	if !ok {
 		return models.URLRecord{}, models.ErrNotFound
 	}
 
-	return data, nil
+	return record, nil
 }
 
 func (s *Store) Delete(_ context.Context, urlData *models.URLData) error {

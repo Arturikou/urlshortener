@@ -27,7 +27,7 @@ func (_m *MockRepository) GetURLByAlias(ctx context.Context, alias string) (stri
 	ret := _m.Called(ctx, alias)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetURLByAlias")
+		panic("no return value specified for GetByAlias")
 	}
 
 	var r0 string
@@ -50,7 +50,7 @@ func (_m *MockRepository) GetURLByAlias(ctx context.Context, alias string) (stri
 	return r0, r1
 }
 
-// MockRepository_GetURLByAlias_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetURLByAlias'
+// MockRepository_GetURLByAlias_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByAlias'
 type MockRepository_GetURLByAlias_Call struct {
 	*mock.Call
 }
@@ -59,7 +59,7 @@ type MockRepository_GetURLByAlias_Call struct {
 //   - ctx context.Context
 //   - alias string
 func (_e *MockRepository_Expecter) GetURLByAlias(ctx interface{}, alias interface{}) *MockRepository_GetURLByAlias_Call {
-	return &MockRepository_GetURLByAlias_Call{Call: _e.mock.On("GetURLByAlias", ctx, alias)}
+	return &MockRepository_GetURLByAlias_Call{Call: _e.mock.On("GetByAlias", ctx, alias)}
 }
 
 func (_c *MockRepository_GetURLByAlias_Call) Run(run func(ctx context.Context, alias string)) *MockRepository_GetURLByAlias_Call {

@@ -20,7 +20,7 @@ const defaultMaxRetries = 10
 type URLRepo interface {
 	AddURL(ctx context.Context, data models.URLData) (int64, error)
 	GetByURL(ctx context.Context, url string) (models.URLRecord, error)
-	GetURLByAlias(ctx context.Context, alias string) (string, error)
+	GetByAlias(ctx context.Context, alias string) (models.URLRecord, error)
 	SaveBatch(ctx context.Context, data []*models.ShortenBatch) ([]*models.ShortenBatch, error)
 }
 
@@ -142,12 +142,16 @@ func (s *Shortener) AddURLs(ctx context.Context, batches []*models.ShortenBatch)
 }
 
 func (s *Shortener) GetURL(ctx context.Context, alias string) (string, error) {
-	originalURL, err := s.urlRepo.GetURLByAlias(ctx, alias)
+	urlRecord, err := s.urlRepo.GetByAlias(ctx, alias)
 	if err != nil {
 		return "", fmt.Errorf("can't get alias: %w", err)
 	}
 
-	return originalURL, nil
+	if urlRecord.DeletedFlag {
+		return "", models.ErrURLDeleted
+	}
+
+	return urlRecord.URL, nil
 }
 
 func (s *Shortener) GetUserURLs(ctx context.Context, userID uuid.UUID) ([]models.UserUrls, error) {

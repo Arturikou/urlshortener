@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"errors"
-	"github.com/Arturikou/urlshortener/internal/models"
-	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/Arturikou/urlshortener/internal/models"
+	"github.com/go-chi/chi/v5"
 )
 
 func (h *Handlers) AddURL(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +65,10 @@ func (h *Handlers) GetURL(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, models.ErrNotFound) {
 			http.Error(w, "shortener not found", http.StatusNotFound)
 			return
+		}
+
+		if errors.Is(err, models.ErrURLDeleted) {
+			http.Error(w, http.StatusText(http.StatusGone), http.StatusGone)
 		}
 
 		h.logger.Errorw("database error during GetURL", "alias", alias, "error", err)

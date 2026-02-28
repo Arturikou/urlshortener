@@ -39,8 +39,8 @@ func (fs *FileStore) SaveBatch(ctx context.Context, data []*models.ShortenBatch)
 	return remaining, nil
 }
 
-func (fs *FileStore) GetURLByAlias(ctx context.Context, id string) (string, error) {
-	return fs.memoryStore.GetURLByAlias(ctx, id)
+func (fs *FileStore) GetByAlias(ctx context.Context, alias string) (models.URLRecord, error) {
+	return fs.memoryStore.GetByAlias(ctx, alias)
 }
 
 func (fs *FileStore) GetByURL(ctx context.Context, url string) (models.URLRecord, error) {
