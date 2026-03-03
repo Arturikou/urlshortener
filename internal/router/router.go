@@ -25,6 +25,7 @@ func New(h *handlers.Handlers, l *zap.Logger) *chi.Mux {
 			r.With(mw.OptionalAuth).Post("/shorten", h.Shorten)
 			r.With(mw.OptionalAuth).Post("/shorten/batch", h.ShortenBatch)
 			r.With(mw.RequireAuth).Get("/user/urls", h.UserUrls)
+			r.With(mw.RequireAuth).Delete("/user/urls", h.DeleteUserURLs)
 		})
 	})
 

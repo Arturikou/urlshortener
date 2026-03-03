@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -54,4 +55,30 @@ func (h *Handlers) UserUrls(w http.ResponseWriter, r *http.Request) {
 		h.logger.Errorw("error encoding response", "error", err)
 		return
 	}
+}
+
+func (h *Handlers) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.UserIDFromContext(r.Context())
+	if !ok {
+		h.logger.Error("failed to get userID from context")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	var aliases []string
+	err := json.NewDecoder(r.Body).Decode(&aliases)
+	if err != nil {
+		h.logger.Errorw("error decoding request body", "error", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	if len(aliases) == 0 {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	go h.urlService.DeleteUserURLs(context.Background(), aliases, userID)
+
+	w.WriteHeader(http.StatusAccepted)
 }

@@ -54,3 +54,7 @@ func (fs *FileStore) GetUserURLs(ctx context.Context, userID uuid.UUID) ([]model
 func (fs *FileStore) AddUserURL(_ context.Context, _ uuid.UUID, _ int64) error {
 	return nil
 }
+
+func (fs *FileStore) DeleteURLs(_ context.Context, _ uuid.UUID, _ []string) error {
+	return nil
+}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/Arturikou/urlshortener/internal/models"
+	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -92,4 +93,26 @@ func (db *DB) GetByURL(ctx context.Context, url string) (models.URLRecord, error
 		return models.URLRecord{}, fmt.Errorf("failed to get alias: %w", err)
 	}
 	return record, nil
+}
+
+func (db *DB) DeleteURLs(ctx context.Context, userID uuid.UUID, aliases []string) error {
+	if len(aliases) == 0 {
+		return nil
+	}
+
+	query := `
+		UPDATE url
+		SET is_deleted = TRUE
+		FROM user_urls
+		WHERE url.id = user_urls.url_id
+		  AND user_urls.user_id = $1
+		  AND url.alias = ANY($2)
+	`
+
+	_, err := db.Exec(ctx, query, userID, aliases)
+	if err != nil {
+		return fmt.Errorf("failed to delete urls: %w", err)
+	}
+
+	return nil
 }

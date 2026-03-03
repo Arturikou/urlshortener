@@ -17,6 +17,7 @@ type URLService interface {
 	GetURL(ctx context.Context, alias string) (string, error)
 	AddURLs(ctx context.Context, shortenBatch []*models.ShortenBatch) ([]models.ShortenBatch, error)
 	GetUserURLs(ctx context.Context, userID uuid.UUID) ([]models.UserUrls, error)
+	DeleteUserURLs(ctx context.Context, aliases []string, userID uuid.UUID) error
 }
 
 type Handlers struct {

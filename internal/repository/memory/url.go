@@ -102,3 +102,7 @@ func (s *Store) AddUserURL(_ context.Context, _ uuid.UUID, _ int64) error {
 func (s *Store) GetUserURLs(_ context.Context, _ uuid.UUID) ([]models.UserUrls, error) {
 	return nil, nil
 }
+
+func (s *Store) DeleteURLs(_ context.Context, _ uuid.UUID, _ []string) error {
+	return nil
+}
