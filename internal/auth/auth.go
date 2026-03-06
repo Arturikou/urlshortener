@@ -26,7 +26,7 @@ func BuildJWTString(userID uuid.UUID) (string, error) {
 
 	tokenString, err := token.SignedString([]byte(secretKey))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to generate token: %w", err)
 	}
 
 	return tokenString, nil
@@ -52,7 +52,7 @@ func GetUserID(tokenString string) (uuid.UUID, error) {
 
 	userID, err := uuid.Parse(claims.UserID)
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
 	return userID, nil

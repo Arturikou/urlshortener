@@ -69,29 +69,41 @@ func (db *DB) SaveBatch(ctx context.Context, data []*models.ShortenBatch) ([]*mo
 
 func (db *DB) GetByAlias(ctx context.Context, alias string) (models.URLRecord, error) {
 	var record models.URLRecord
+	var isDeleted bool
 	query := `SELECT id, alias, url, is_deleted FROM url WHERE alias = $1`
 
-	err := db.QueryRow(ctx, query, alias).Scan(&record.ID, &record.Alias, &record.URL, &record.DeletedFlag)
+	err := db.QueryRow(ctx, query, alias).Scan(&record.ID, &record.Alias, &record.URL, &isDeleted)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return models.URLRecord{}, models.ErrNotFound
 		}
 		return models.URLRecord{}, fmt.Errorf("failed to get alias: %w", err)
 	}
+
+	if isDeleted {
+		return models.URLRecord{}, models.ErrURLDeleted
+	}
+
 	return record, nil
 }
 
 func (db *DB) GetByURL(ctx context.Context, url string) (models.URLRecord, error) {
 	var record models.URLRecord
+	var isDeleted bool
 
 	query := `SELECT id, alias, url, is_deleted FROM url WHERE url = $1`
-	err := db.QueryRow(ctx, query, url).Scan(&record.ID, &record.Alias, &record.URL, &record.DeletedFlag)
+	err := db.QueryRow(ctx, query, url).Scan(&record.ID, &record.Alias, &record.URL, &isDeleted)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return models.URLRecord{}, models.ErrNotFound
 		}
 		return models.URLRecord{}, fmt.Errorf("failed to get alias: %w", err)
 	}
+
+	if isDeleted {
+		return models.URLRecord{}, models.ErrURLDeleted
+	}
+
 	return record, nil
 }
 

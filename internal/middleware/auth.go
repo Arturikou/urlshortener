@@ -2,11 +2,15 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/Arturikou/urlshortener/internal/auth"
 	"github.com/google/uuid"
 )
+
+var ErrContextKeyNotFound = errors.New("key not found in context")
+var ErrContextValueWrongType = errors.New("context value has unexpected type")
 
 type ContextKey string
 
@@ -73,7 +77,16 @@ func RequireAuth(next http.Handler) http.Handler {
 	})
 }
 
-func UserIDFromContext(ctx context.Context) (uuid.UUID, bool) {
-	id, ok := ctx.Value(ContextKeyUserID).(uuid.UUID)
-	return id, ok
+func UserIDFromContext(ctx context.Context) (uuid.UUID, error) {
+	val := ctx.Value(ContextKeyUserID)
+	if val == nil {
+		return uuid.Nil, ErrContextKeyNotFound
+	}
+
+	id, ok := val.(uuid.UUID)
+	if !ok {
+		return uuid.Nil, ErrContextValueWrongType
+	}
+
+	return id, nil
 }

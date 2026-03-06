@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Arturikou/urlshortener/internal/models"
 	"github.com/google/uuid"
@@ -12,20 +13,19 @@ func (s *Store) AddURL(_ context.Context, data models.URLData) (int64, error) {
 	defer s.mu.Unlock()
 
 	if _, ok := s.urlToAlias[data.OriginalURL]; ok {
-		return 0, models.ErrURLAlreadyShorted
+		return 0, fmt.Errorf("url %q: %w", data.OriginalURL, models.ErrURLAlreadyShorted)
 	}
 
 	if _, ok := s.aliasToURL[data.Alias]; ok {
-		return 0, models.ErrAliasAlreadyExists
+		return 0, fmt.Errorf("alias %q: %w", data.Alias, models.ErrAliasAlreadyExists)
 	}
 
 	s.counter++
 
 	s.urlToAlias[data.OriginalURL] = models.URLRecord{
-		ID:          s.counter,
-		Alias:       data.Alias,
-		URL:         data.OriginalURL,
-		DeletedFlag: false,
+		ID:    s.counter,
+		Alias: data.Alias,
+		URL:   data.OriginalURL,
 	}
 	s.aliasToURL[data.Alias] = data.OriginalURL
 

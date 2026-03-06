@@ -15,8 +15,8 @@ type UserUrlsResp struct {
 }
 
 func (h *Handlers) UserUrls(w http.ResponseWriter, r *http.Request) {
-	userID, ok := middleware.UserIDFromContext(r.Context())
-	if !ok {
+	userID, err := middleware.UserIDFromContext(r.Context())
+	if err != nil {
 		h.logger.Error("failed to get userID from context")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -58,15 +58,15 @@ func (h *Handlers) UserUrls(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
-	userID, ok := middleware.UserIDFromContext(r.Context())
-	if !ok {
+	userID, err := middleware.UserIDFromContext(r.Context())
+	if err != nil {
 		h.logger.Error("failed to get userID from context")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	var aliases []string
-	err := json.NewDecoder(r.Body).Decode(&aliases)
+	err = json.NewDecoder(r.Body).Decode(&aliases)
 	if err != nil {
 		h.logger.Errorw("error decoding request body", "error", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)

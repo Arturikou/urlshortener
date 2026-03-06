@@ -6,10 +6,9 @@ type URLData struct {
 }
 
 type URLRecord struct {
-	ID          int64  `db:"id"`
-	Alias       string `db:"alias"`
-	URL         string `db:"url"`
-	DeletedFlag bool   `db:"is_deleted"`
+	ID    int64  `db:"id"`
+	Alias string `db:"alias"`
+	URL   string `db:"url"`
 }
 
 type UpsertResult struct {

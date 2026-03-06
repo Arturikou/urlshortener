@@ -58,9 +58,9 @@ type AddURLResult struct {
 }
 
 func (s *Shortener) AddURL(ctx context.Context, originalURL string) (AddURLResult, error) {
-	userID, ok := middleware.UserIDFromContext(ctx)
-	if !ok {
-		return AddURLResult{}, fmt.Errorf("userID not found in context")
+	userID, err := middleware.UserIDFromContext(ctx)
+	if err != nil {
+		return AddURLResult{}, fmt.Errorf("userID not found in context: %w", err)
 	}
 
 	for i := 0; i < defaultMaxRetries; i++ {
@@ -146,10 +146,6 @@ func (s *Shortener) GetURL(ctx context.Context, alias string) (string, error) {
 	urlRecord, err := s.urlRepo.GetByAlias(ctx, alias)
 	if err != nil {
 		return "", fmt.Errorf("can't get alias: %w", err)
-	}
-
-	if urlRecord.DeletedFlag {
-		return "", models.ErrURLDeleted
 	}
 
 	return urlRecord.URL, nil
