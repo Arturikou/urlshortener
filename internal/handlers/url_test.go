@@ -99,7 +99,8 @@ func TestHandlers_AddURL(t *testing.T) {
 			}
 
 			mockPinger := pinger.NewMockPinger(t)
-			h := handlers.New(mockService, mockPinger, cfg, logger)
+			mockEnqueuer := new(mocks.MockDeleteEnqueuer)
+			h := handlers.New(mockService, mockEnqueuer, mockPinger, cfg, logger)
 
 			r := chi.NewRouter()
 			r.Post("/", h.AddURL)
@@ -195,7 +196,8 @@ func TestHandlers_GetURL(t *testing.T) {
 				On("GetURL", mock.Anything, test.alias).
 				Return(test.mock.returnURL, test.mock.returnErr)
 
-			h := handlers.New(mockService, mockPinger, cfg, logger)
+			mockEnqueuer := new(mocks.MockDeleteEnqueuer)
+			h := handlers.New(mockService, mockEnqueuer, mockPinger, cfg, logger)
 			r := chi.NewRouter()
 			r.Get("/{alias}", h.GetURL)
 

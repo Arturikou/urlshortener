@@ -9,6 +9,7 @@ packages:
       filename: "{{.InterfaceName | snakecase}}_mock.go"
     interfaces:
       URLService: {}
+      DeleteEnqueuer: {}
   github.com/Arturikou/urlshortener/internal/service/shortener:
     config:
       dir: "mocks"

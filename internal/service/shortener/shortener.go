@@ -186,19 +186,9 @@ func (s *Shortener) addUserURL(ctx context.Context, userID uuid.UUID, urlData mo
 	return AddURLResult{}, err
 }
 
-func (s *Shortener) DeleteUserURLs(ctx context.Context, aliases []string, userID uuid.UUID) error {
-	const batchSize = 100
-
-	for i := 0; i < len(aliases); i += batchSize {
-		end := i + batchSize
-		if end > len(aliases) {
-			end = len(aliases)
-		}
-
-		batch := aliases[i:end]
-		if err := s.urlRepo.DeleteURLs(ctx, userID, batch); err != nil {
-			s.logger.Errorf("failed to delete urls: %v", err)
-		}
+func (s *Shortener) DeleteUserURLs(ctx context.Context, userID uuid.UUID, aliases []string) error {
+	if err := s.urlRepo.DeleteURLs(ctx, userID, aliases); err != nil {
+		return fmt.Errorf("failed to delete urls: %w", err)
 	}
 
 	return nil

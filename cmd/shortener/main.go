@@ -11,6 +11,7 @@ import (
 	"github.com/Arturikou/urlshortener/internal/router"
 	"github.com/Arturikou/urlshortener/internal/service/shortener"
 	"github.com/Arturikou/urlshortener/internal/storage"
+	"github.com/Arturikou/urlshortener/internal/workers/deleteworker"
 	"go.uber.org/zap"
 )
 
@@ -35,8 +36,10 @@ func main() {
 	}
 
 	urlService := shortener.New(st.URLRepo, st.UserURLRepo, st.Transactor, sl)
+	worker := deleteworker.New(urlService, sl)
+	go worker.Run(ctx)
 
-	h := handlers.New(urlService, st.Pinger, cfg.Handlers, sl)
+	h := handlers.New(urlService, worker, st.Pinger, cfg.Handlers, sl)
 	r := router.New(h, l)
 
 	srv := &http.Server{

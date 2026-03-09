@@ -17,21 +17,33 @@ type URLService interface {
 	GetURL(ctx context.Context, alias string) (string, error)
 	AddURLs(ctx context.Context, shortenBatch []*models.ShortenBatch) ([]models.ShortenBatch, error)
 	GetUserURLs(ctx context.Context, userID uuid.UUID) ([]models.UserUrls, error)
-	DeleteUserURLs(ctx context.Context, aliases []string, userID uuid.UUID) error
+}
+
+//go:generate mockery
+type DeleteEnqueuer interface {
+	EnqueueDelete(userID uuid.UUID, aliases []string)
 }
 
 type Handlers struct {
-	urlService URLService
-	pinger     storage.Pinger
-	cfg        config.HandlersConfig
-	logger     *zap.SugaredLogger
+	urlService     URLService
+	deleteEnqueuer DeleteEnqueuer
+	pinger         storage.Pinger
+	cfg            config.HandlersConfig
+	logger         *zap.SugaredLogger
 }
 
-func New(urlService URLService, pinger storage.Pinger, cfg config.HandlersConfig, logger *zap.SugaredLogger) *Handlers {
+func New(
+	urlService URLService,
+	deleteEnqueuer DeleteEnqueuer,
+	pinger storage.Pinger,
+	cfg config.HandlersConfig,
+	logger *zap.SugaredLogger,
+) *Handlers {
 	return &Handlers{
-		urlService: urlService,
-		pinger:     pinger,
-		cfg:        cfg,
-		logger:     logger,
+		urlService:     urlService,
+		deleteEnqueuer: deleteEnqueuer,
+		pinger:         pinger,
+		cfg:            cfg,
+		logger:         logger,
 	}
 }

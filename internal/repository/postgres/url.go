@@ -112,18 +112,25 @@ func (db *DB) DeleteURLs(ctx context.Context, userID uuid.UUID, aliases []string
 		return nil
 	}
 
-	query := `
+	batch := &pgx.Batch{}
+	for _, alias := range aliases {
+		batch.Queue(`
 		UPDATE url
 		SET is_deleted = TRUE
 		FROM user_urls
 		WHERE url.id = user_urls.url_id
 		  AND user_urls.user_id = $1
-		  AND url.alias = ANY($2)
-	`
+		  AND url.alias = $2
+	`, userID, alias)
+	}
 
-	_, err := db.Exec(ctx, query, userID, aliases)
-	if err != nil {
-		return fmt.Errorf("failed to delete urls: %w", err)
+	br := db.SendBatch(ctx, batch)
+	defer br.Close()
+
+	for range aliases {
+		if _, err := br.Exec(); err != nil {
+			return fmt.Errorf("delete failed: %w", err)
+		}
 	}
 
 	return nil

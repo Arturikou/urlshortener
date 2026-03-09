@@ -106,7 +106,8 @@ func TestHandlers_UserUrls(t *testing.T) {
 			}
 
 			mockPinger := pinger.NewMockPinger(t)
-			h := handlers.New(mockService, mockPinger, cfg, logger)
+			mockEnqueuer := new(mocks.MockDeleteEnqueuer)
+			h := handlers.New(mockService, mockEnqueuer, mockPinger, cfg, logger)
 
 			r := chi.NewRouter()
 			r.Get("/api/user/urls", h.UserUrls)

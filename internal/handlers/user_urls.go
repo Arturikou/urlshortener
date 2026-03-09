@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -78,7 +77,7 @@ func (h *Handlers) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go h.urlService.DeleteUserURLs(context.Background(), aliases, userID)
+	h.deleteEnqueuer.EnqueueDelete(userID, aliases)
 
 	w.WriteHeader(http.StatusAccepted)
 }

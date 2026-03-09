@@ -64,7 +64,8 @@ func TestRouter_AddURL(t *testing.T) {
 	mockPinger := pinger.NewMockPinger(t)
 
 	logger := zap.NewNop()
-	h := handlers.New(mockService, mockPinger, cfg, logger.Sugar())
+	mockEnqueuer := new(mocks.MockDeleteEnqueuer)
+	h := handlers.New(mockService, mockEnqueuer, mockPinger, cfg, logger.Sugar())
 	ts := httptest.NewServer(New(h, logger))
 	defer ts.Close()
 
@@ -84,7 +85,8 @@ func TestRouter_GetURL(t *testing.T) {
 	mockPinger := pinger.NewMockPinger(t)
 
 	logger := zap.NewNop()
-	h := handlers.New(mockService, mockPinger, cfg, logger.Sugar())
+	mockEnqueuer := new(mocks.MockDeleteEnqueuer)
+	h := handlers.New(mockService, mockEnqueuer, mockPinger, cfg, logger.Sugar())
 	ts := httptest.NewServer(New(h, logger))
 	defer ts.Close()
 
@@ -103,7 +105,8 @@ func TestRouter_ShortenURL(t *testing.T) {
 	mockPinger := pinger.NewMockPinger(t)
 
 	logger := zap.NewNop()
-	h := handlers.New(mockService, mockPinger, cfg, logger.Sugar())
+	mockEnqueuer := new(mocks.MockDeleteEnqueuer)
+	h := handlers.New(mockService, mockEnqueuer, mockPinger, cfg, logger.Sugar())
 	ts := httptest.NewServer(New(h, logger))
 	defer ts.Close()
 
