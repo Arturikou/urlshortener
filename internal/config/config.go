@@ -16,12 +16,18 @@ type DatabaseConfig struct {
 	DSN string
 }
 
+type Audit struct {
+	AuditFile string
+	AuditURL  string
+}
+
 type Config struct {
 	ServerAddr      string
 	LogLevel        string
 	FileStoragePath string
 	Handlers        HandlersConfig
 	Database        DatabaseConfig
+	Audit           Audit
 }
 
 func New() *Config {
@@ -32,6 +38,8 @@ func New() *Config {
 	flag.StringVar(&cfg.FileStoragePath, "f", "storage.json", "File storage path")
 	flag.StringVar(&cfg.Handlers.BaseAddr, "b", "http://localhost:8080", "The address for shortener response")
 	flag.StringVar(&cfg.Database.DSN, "d", "", "Database DSN")
+	flag.StringVar(&cfg.Audit.AuditFile, "httpaudit-file", "", "Audit file path")
+	flag.StringVar(&cfg.Audit.AuditURL, "httpaudit-url", "", "Audit URL")
 	flag.Parse()
 
 	if envServerAddr := os.Getenv("SERVER_ADDRESS"); envServerAddr != "" {
@@ -54,8 +62,23 @@ func New() *Config {
 		cfg.Database.DSN = envDatabaseDSN
 	}
 
+	if envAuditFilePath := os.Getenv("AUDIT_FILE"); envAuditFilePath != "" {
+		cfg.Audit.AuditFile = envAuditFilePath
+	}
+
+	if envAuditURL := os.Getenv("AUDIT_URL"); envAuditURL != "" {
+		cfg.Audit.AuditURL = envAuditURL
+	}
+
 	if err := validateFilePath(cfg.FileStoragePath); err != nil {
 		log.Fatalf("Configuration error: %v", err)
+	}
+
+	if cfg.Audit.AuditFile != "" {
+		err := validateFilePath(cfg.Audit.AuditFile)
+		if err != nil {
+			log.Fatalf("Configuration error: %v", err)
+		}
 	}
 
 	return cfg

@@ -6,7 +6,9 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/Arturikou/urlshortener/internal/managers/audit"
 	"github.com/Arturikou/urlshortener/internal/middleware"
 	"github.com/Arturikou/urlshortener/internal/models"
 	"github.com/Arturikou/urlshortener/internal/transactor"
@@ -31,24 +33,31 @@ type UserURLRepo interface {
 	GetUserURLs(ctx context.Context, userID uuid.UUID) ([]models.UserUrls, error)
 }
 
+type AuditManager interface {
+	NotifyAll(event audit.Event)
+}
+
 type Shortener struct {
-	urlRepo     URLRepo
-	userURLRepo UserURLRepo
-	transactor  transactor.Transactor
-	logger      *zap.SugaredLogger
+	urlRepo      URLRepo
+	userURLRepo  UserURLRepo
+	transactor   transactor.Transactor
+	auditManager AuditManager
+	logger       *zap.SugaredLogger
 }
 
 func New(
 	urlRepo URLRepo,
 	userURLRepo UserURLRepo,
 	transactor transactor.Transactor,
+	auditManager AuditManager,
 	logger *zap.SugaredLogger,
 ) *Shortener {
 	return &Shortener{
-		urlRepo:     urlRepo,
-		userURLRepo: userURLRepo,
-		transactor:  transactor,
-		logger:      logger,
+		urlRepo:      urlRepo,
+		userURLRepo:  userURLRepo,
+		transactor:   transactor,
+		auditManager: auditManager,
+		logger:       logger,
 	}
 }
 
@@ -76,6 +85,13 @@ func (s *Shortener) AddURL(ctx context.Context, originalURL string) (AddURLResul
 
 		addURLResult, err := s.addUserURL(ctx, userID, urlData)
 		if err == nil {
+			s.auditManager.NotifyAll(audit.Event{
+				Timestamp: time.Now().Unix(),
+				Action:    "shorten",
+				UserID:    &userID,
+				URL:       originalURL,
+			})
+
 			return addURLResult, nil
 		}
 
@@ -147,6 +163,18 @@ func (s *Shortener) GetURL(ctx context.Context, alias string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("can't get alias: %w", err)
 	}
+
+	userID, err := middleware.UserIDFromContext(ctx)
+	if err != nil {
+		return "", fmt.Errorf("userID not found in context: %w", err)
+	}
+
+	s.auditManager.NotifyAll(audit.Event{
+		Timestamp: time.Now().Unix(),
+		Action:    "follow",
+		UserID:    &userID,
+		URL:       urlRecord.URL,
+	})
 
 	return urlRecord.URL, nil
 }
