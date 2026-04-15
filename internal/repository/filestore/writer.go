@@ -35,7 +35,7 @@ func (p *Producer) WriteEvent(record *models.URLData) error {
 	return p.writer.Flush()
 }
 
-func (p *Producer) WriteBatch(records []*models.ShortenBatch) error {
+func (p *Producer) WriteBatch(records []models.ShortenBatch) error {
 	for _, rec := range records {
 		event := models.URLData{
 			OriginalURL: rec.OriginalURL,

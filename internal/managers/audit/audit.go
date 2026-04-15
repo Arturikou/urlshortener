@@ -3,10 +3,10 @@ package audit
 import "github.com/google/uuid"
 
 type Event struct {
-	Timestamp int64      `json:"ts"`
-	Action    string     `json:"action"`
-	UserID    *uuid.UUID `json:"user_id,omitempty"`
-	URL       string     `json:"url"`
+	Timestamp int64     `json:"ts"`
+	Action    string    `json:"action"`
+	UserID    uuid.UUID `json:"user_id"`
+	URL       string    `json:"url"`
 }
 
 type Observer interface {

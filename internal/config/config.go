@@ -6,31 +6,33 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
+type Config struct {
+	ServerAddr      string `env:"SERVER_ADDRESS"`
+	LogLevel        string `env:"LOG_LEVEL"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+	Handlers        HandlersConfig
+	Database        DatabaseConfig
+	Audit           AuditConfig
+}
+
 type HandlersConfig struct {
-	BaseAddr string
+	BaseAddr string `env:"BASE_URL"`
 }
 
 type DatabaseConfig struct {
-	DSN string
+	DSN string `env:"DATABASE_DSN"`
 }
 
-type Audit struct {
-	AuditFile string
-	AuditURL  string
+type AuditConfig struct {
+	AuditFile string `env:"AUDIT_FILE"`
+	AuditURL  string `env:"AUDIT_URL"`
 }
 
-type Config struct {
-	ServerAddr      string
-	LogLevel        string
-	FileStoragePath string
-	Handlers        HandlersConfig
-	Database        DatabaseConfig
-	Audit           Audit
-}
-
-func New() *Config {
+func MustLoad() *Config {
 	cfg := &Config{}
 
 	flag.StringVar(&cfg.ServerAddr, "a", "localhost:8080", "The address to listen on for HTTP requests.")
@@ -38,50 +40,35 @@ func New() *Config {
 	flag.StringVar(&cfg.FileStoragePath, "f", "storage.json", "File storage path")
 	flag.StringVar(&cfg.Handlers.BaseAddr, "b", "http://localhost:8080", "The address for shortener response")
 	flag.StringVar(&cfg.Database.DSN, "d", "", "Database DSN")
-	flag.StringVar(&cfg.Audit.AuditFile, "httpaudit-file", "", "Audit file path")
-	flag.StringVar(&cfg.Audit.AuditURL, "httpaudit-url", "", "Audit URL")
+	flag.StringVar(&cfg.Audit.AuditFile, "audit-file", "", "AuditConfig file path")
+	flag.StringVar(&cfg.Audit.AuditURL, "audit-url", "", "AuditConfig URL")
 	flag.Parse()
 
-	if envServerAddr := os.Getenv("SERVER_ADDRESS"); envServerAddr != "" {
-		cfg.ServerAddr = envServerAddr
+	if err := cleanenv.ReadEnv(cfg); err != nil {
+		log.Fatalf("failed to read env variables: %v", err)
 	}
 
-	if envLogLevel := os.Getenv("LOG_LEVEL"); envLogLevel != "" {
-		cfg.LogLevel = envLogLevel
-	}
-
-	if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
-		cfg.FileStoragePath = envFileStoragePath
-	}
-
-	if envBaseAddr := os.Getenv("BASE_URL"); envBaseAddr != "" {
-		cfg.Handlers.BaseAddr = envBaseAddr
-	}
-
-	if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
-		cfg.Database.DSN = envDatabaseDSN
-	}
-
-	if envAuditFilePath := os.Getenv("AUDIT_FILE"); envAuditFilePath != "" {
-		cfg.Audit.AuditFile = envAuditFilePath
-	}
-
-	if envAuditURL := os.Getenv("AUDIT_URL"); envAuditURL != "" {
-		cfg.Audit.AuditURL = envAuditURL
-	}
-
-	if err := validateFilePath(cfg.FileStoragePath); err != nil {
-		log.Fatalf("Configuration error: %v", err)
-	}
-
-	if cfg.Audit.AuditFile != "" {
-		err := validateFilePath(cfg.Audit.AuditFile)
-		if err != nil {
-			log.Fatalf("Configuration error: %v", err)
-		}
+	if err := cfg.validate(); err != nil {
+		log.Fatalf("config validation failed: %v", err)
 	}
 
 	return cfg
+}
+
+func (cfg *Config) validate() error {
+	if cfg.FileStoragePath != "" {
+		if err := validateFilePath(cfg.FileStoragePath); err != nil {
+			return fmt.Errorf("storage path: %v", err)
+		}
+	}
+
+	if cfg.Audit.AuditFile != "" {
+		if err := validateFilePath(cfg.Audit.AuditFile); err != nil {
+			return fmt.Errorf("audit file: %v", err)
+		}
+	}
+
+	return nil
 }
 
 func validateFilePath(filePath string) error {

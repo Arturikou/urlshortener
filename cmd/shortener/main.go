@@ -15,10 +15,12 @@ import (
 	"github.com/Arturikou/urlshortener/internal/storage"
 	"github.com/Arturikou/urlshortener/internal/workers/deleteworker"
 	"go.uber.org/zap"
+
+	_ "net/http/pprof"
 )
 
 func main() {
-	cfg := config.New()
+	cfg := config.MustLoad()
 	ctx := context.Background()
 
 	l, err := logging.New(cfg.LogLevel)
@@ -68,6 +70,13 @@ func main() {
 		Addr:    cfg.ServerAddr,
 		Handler: r,
 	}
+
+	go func() {
+		log.Println("pprof listening on :6060")
+		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
+			sl.Warnf("pprof server error: %v", err)
+		}
+	}()
 
 	l.Info("starting server", zap.String("addr", cfg.ServerAddr))
 	if err := srv.ListenAndServe(); err != nil {

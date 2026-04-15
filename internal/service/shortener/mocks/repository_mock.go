@@ -137,27 +137,27 @@ func (_c *MockRepository_InsertOrGetAlias_Call) RunAndReturn(run func(context.Co
 }
 
 // SaveBatch provides a mock function with given fields: ctx, data
-func (_m *MockRepository) SaveBatch(ctx context.Context, data []*models.ShortenBatch) ([]*models.ShortenBatch, error) {
+func (_m *MockRepository) SaveBatch(ctx context.Context, data []models.ShortenBatch) ([]models.ShortenBatch, error) {
 	ret := _m.Called(ctx, data)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveBatch")
 	}
 
-	var r0 []*models.ShortenBatch
+	var r0 []models.ShortenBatch
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []*models.ShortenBatch) ([]*models.ShortenBatch, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []models.ShortenBatch) ([]models.ShortenBatch, error)); ok {
 		return rf(ctx, data)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []*models.ShortenBatch) []*models.ShortenBatch); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []models.ShortenBatch) []models.ShortenBatch); ok {
 		r0 = rf(ctx, data)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.ShortenBatch)
+			r0 = ret.Get(0).([]models.ShortenBatch)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []*models.ShortenBatch) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, []models.ShortenBatch) error); ok {
 		r1 = rf(ctx, data)
 	} else {
 		r1 = ret.Error(1)
@@ -173,24 +173,24 @@ type MockRepository_SaveBatch_Call struct {
 
 // SaveBatch is a helper method to define mock.On call
 //   - ctx context.Context
-//   - data []*models.ShortenBatch
+//   - data []models.ShortenBatch
 func (_e *MockRepository_Expecter) SaveBatch(ctx interface{}, data interface{}) *MockRepository_SaveBatch_Call {
 	return &MockRepository_SaveBatch_Call{Call: _e.mock.On("SaveBatch", ctx, data)}
 }
 
-func (_c *MockRepository_SaveBatch_Call) Run(run func(ctx context.Context, data []*models.ShortenBatch)) *MockRepository_SaveBatch_Call {
+func (_c *MockRepository_SaveBatch_Call) Run(run func(ctx context.Context, data []models.ShortenBatch)) *MockRepository_SaveBatch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]*models.ShortenBatch))
+		run(args[0].(context.Context), args[1].([]models.ShortenBatch))
 	})
 	return _c
 }
 
-func (_c *MockRepository_SaveBatch_Call) Return(_a0 []*models.ShortenBatch, _a1 error) *MockRepository_SaveBatch_Call {
+func (_c *MockRepository_SaveBatch_Call) Return(_a0 []models.ShortenBatch, _a1 error) *MockRepository_SaveBatch_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockRepository_SaveBatch_Call) RunAndReturn(run func(context.Context, []*models.ShortenBatch) ([]*models.ShortenBatch, error)) *MockRepository_SaveBatch_Call {
+func (_c *MockRepository_SaveBatch_Call) RunAndReturn(run func(context.Context, []models.ShortenBatch) ([]models.ShortenBatch, error)) *MockRepository_SaveBatch_Call {
 	_c.Call.Return(run)
 	return _c
 }

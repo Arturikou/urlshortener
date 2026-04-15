@@ -23,7 +23,7 @@ type URLRepo interface {
 	AddURL(ctx context.Context, data models.URLData) (int64, error)
 	GetByURL(ctx context.Context, url string) (models.URLRecord, error)
 	GetByAlias(ctx context.Context, alias string) (models.URLRecord, error)
-	SaveBatch(ctx context.Context, data []*models.ShortenBatch) ([]*models.ShortenBatch, error)
+	SaveBatch(ctx context.Context, data []models.ShortenBatch) ([]models.ShortenBatch, error)
 	DeleteURLs(ctx context.Context, userID uuid.UUID, aliases []string) error
 }
 
@@ -88,7 +88,7 @@ func (s *Shortener) AddURL(ctx context.Context, originalURL string) (AddURLResul
 			s.auditManager.NotifyAll(audit.Event{
 				Timestamp: time.Now().Unix(),
 				Action:    "shorten",
-				UserID:    &userID,
+				UserID:    userID,
 				URL:       originalURL,
 			})
 
@@ -105,7 +105,7 @@ func (s *Shortener) AddURL(ctx context.Context, originalURL string) (AddURLResul
 	return AddURLResult{}, fmt.Errorf("failed to generate unique id after %d attempts", defaultMaxRetries)
 }
 
-func (s *Shortener) AddURLs(ctx context.Context, batches []*models.ShortenBatch) ([]models.ShortenBatch, error) {
+func (s *Shortener) AddURLs(ctx context.Context, batches []models.ShortenBatch) ([]models.ShortenBatch, error) {
 	batchSize := 1000
 
 	for i := 0; i < len(batches); i += batchSize {
@@ -114,12 +114,13 @@ func (s *Shortener) AddURLs(ctx context.Context, batches []*models.ShortenBatch)
 			end = len(batches)
 		}
 
-		for _, item := range batches[i:end] {
+		sub := batches[i:end]
+		for j := range sub {
 			alias, err := generateAlias()
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate alias: %w", err)
 			}
-			item.Alias = alias
+			sub[j].Alias = alias
 		}
 
 		currentBatch := batches[i:end]
@@ -150,12 +151,7 @@ func (s *Shortener) AddURLs(ctx context.Context, batches []*models.ShortenBatch)
 		}
 	}
 
-	result := make([]models.ShortenBatch, len(batches))
-	for idx, item := range batches {
-		result[idx] = *item
-	}
-
-	return result, nil
+	return batches, nil
 }
 
 func (s *Shortener) GetURL(ctx context.Context, alias string) (string, error) {
@@ -172,7 +168,7 @@ func (s *Shortener) GetURL(ctx context.Context, alias string) (string, error) {
 	s.auditManager.NotifyAll(audit.Event{
 		Timestamp: time.Now().Unix(),
 		Action:    "follow",
-		UserID:    &userID,
+		UserID:    userID,
 		URL:       urlRecord.URL,
 	})
 

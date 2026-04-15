@@ -32,26 +32,26 @@ func (s *Store) AddURL(_ context.Context, data models.URLData) (int64, error) {
 	return s.counter, nil
 }
 
-func (s *Store) SaveBatch(_ context.Context, data []*models.ShortenBatch) ([]*models.ShortenBatch, error) {
+func (s *Store) SaveBatch(_ context.Context, data []models.ShortenBatch) ([]models.ShortenBatch, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	for idx, v := range data {
-		if existingAlias, ok := s.urlToAlias[v.OriginalURL]; ok {
-			v.Alias = existingAlias.Alias
+	for idx := range data {
+		if existingAlias, ok := s.urlToAlias[data[idx].OriginalURL]; ok {
+			data[idx].Alias = existingAlias.Alias
 			continue
 		}
 
-		if _, ok := s.aliasToURL[v.Alias]; ok {
+		if _, ok := s.aliasToURL[data[idx].Alias]; ok {
 			return data[idx:], nil
 		}
 
-		s.urlToAlias[v.OriginalURL] = models.URLRecord{
+		s.urlToAlias[data[idx].OriginalURL] = models.URLRecord{
 			ID:    s.counter,
-			Alias: v.Alias,
+			Alias: data[idx].Alias,
 		}
 
-		s.aliasToURL[v.Alias] = v.OriginalURL
+		s.aliasToURL[data[idx].Alias] = data[idx].OriginalURL
 	}
 	return nil, nil
 }

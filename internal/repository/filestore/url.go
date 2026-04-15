@@ -23,7 +23,7 @@ func (fs *FileStore) AddURL(ctx context.Context, data models.URLData) (int64, er
 	return upsertResult, nil
 }
 
-func (fs *FileStore) SaveBatch(ctx context.Context, data []*models.ShortenBatch) ([]*models.ShortenBatch, error) {
+func (fs *FileStore) SaveBatch(ctx context.Context, data []models.ShortenBatch) ([]models.ShortenBatch, error) {
 	remaining, err := fs.memoryStore.SaveBatch(ctx, data)
 	if err != nil {
 		return nil, fmt.Errorf("fail to memory save: %w", err)

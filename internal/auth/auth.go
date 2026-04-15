@@ -11,6 +11,8 @@ import (
 const tokenExp = time.Minute * 15
 const secretKey = "supersecretkey"
 
+var secretKeyBytes = []byte(secretKey)
+
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string
@@ -24,7 +26,7 @@ func BuildJWTString(userID uuid.UUID) (string, error) {
 		UserID: userID.String(),
 	})
 
-	tokenString, err := token.SignedString([]byte(secretKey))
+	tokenString, err := token.SignedString(secretKeyBytes)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate token: %w", err)
 	}
@@ -39,7 +41,7 @@ func GetUserID(tokenString string) (uuid.UUID, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 			}
-			return []byte(secretKey), nil
+			return secretKeyBytes, nil
 		})
 
 	if err != nil {

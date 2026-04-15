@@ -34,9 +34,9 @@ func (h *Handlers) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortenBatch := make([]*models.ShortenBatch, len(req))
+	shortenBatch := make([]models.ShortenBatch, len(req))
 	for idx, reqItem := range req {
-		shortenBatch[idx] = &models.ShortenBatch{
+		shortenBatch[idx] = models.ShortenBatch{
 			CorrelationID: reqItem.CorrelationID,
 			OriginalURL:   reqItem.OriginalURL,
 		}

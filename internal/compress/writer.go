@@ -2,9 +2,18 @@ package compress
 
 import (
 	"compress/gzip"
+	"io"
 	"net/http"
 	"strings"
+	"sync"
 )
+
+var gzipPool = sync.Pool{
+	New: func() any {
+		gz, _ := gzip.NewWriterLevel(io.Discard, gzip.DefaultCompression)
+		return gz
+	},
+}
 
 var compressibleTypes = []string{
 	"application/json",
@@ -30,7 +39,9 @@ func (c *CompressWriter) Write(p []byte) (int, error) {
 	if c.zw == nil && c.isCompressible() {
 		c.w.Header().Set("Content-Encoding", "gzip")
 		c.w.Header().Del("Content-Length")
-		c.zw = gzip.NewWriter(c.w)
+		gz := gzipPool.Get().(*gzip.Writer)
+		gz.Reset(c.w)
+		c.zw = gz
 	}
 
 	if c.zw != nil {
@@ -50,7 +61,10 @@ func (c *CompressWriter) WriteHeader(statusCode int) {
 
 func (c *CompressWriter) Close() error {
 	if c.zw != nil {
-		return c.zw.Close()
+		err := c.zw.Close()
+		gzipPool.Put(c.zw)
+		c.zw = nil
+		return err
 	}
 	return nil
 }
