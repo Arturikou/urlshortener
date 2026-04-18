@@ -3,8 +3,9 @@ package filestore
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/Arturikou/urlshortener/internal/models"
 	"os"
+
+	"github.com/Arturikou/urlshortener/internal/models"
 )
 
 type Producer struct {
