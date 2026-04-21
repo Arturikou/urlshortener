@@ -11,6 +11,19 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// AddURL godoc
+//
+//	@Summary		Shorten URL (plain text)
+//	@Description	Accepts a plain-text URL in the body and returns the shortened URL
+//	@Tags			urls
+//	@Accept			plain
+//	@Produce		plain
+//	@Param			url	body		string	true	"Original URL"
+//	@Success		201	{string}	string	"Short URL"
+//	@Failure		400	{string}	string	"Empty body"
+//	@Failure		409	{string}	string	"URL already shortened"
+//	@Failure		500	{string}	string	"Internal server error"
+//	@Router			/ [post]
 func (h *Handlers) AddURL(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -52,6 +65,18 @@ func (h *Handlers) AddURL(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetURL godoc
+//
+//	@Summary		Redirect to original URL
+//	@Description	Redirects to the original URL by short alias
+//	@Tags			urls
+//	@Param			alias	path	string	true	"Short URL alias"
+//	@Success		307
+//	@Failure		400	{string}	string	"Alias is required"
+//	@Failure		404	{string}	string	"Not found"
+//	@Failure		410	{string}	string	"URL has been deleted"
+//	@Failure		500	{string}	string	"Internal server error"
+//	@Router			/{alias} [get]
 func (h *Handlers) GetURL(w http.ResponseWriter, r *http.Request) {
 	alias := chi.URLParam(r, "alias")
 

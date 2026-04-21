@@ -6,6 +6,14 @@ import (
 	"time"
 )
 
+// Ping godoc
+//
+//	@Summary		Health check
+//	@Description	Check database connectivity
+//	@Tags			health
+//	@Success		200
+//	@Failure		500
+//	@Router			/ping [get]
 func (h *Handlers) Ping(w http.ResponseWriter, r *http.Request) {
 	if h.pinger == nil {
 		h.logger.Error("database repository is not initialized")

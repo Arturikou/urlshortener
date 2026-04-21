@@ -18,6 +18,18 @@ type ShortenBatchResp struct {
 	ShortURL      string `json:"short_url"`
 }
 
+// ShortenBatch godoc
+//
+//	@Summary		Batch shorten URLs
+//	@Description	Accepts URLs and returns shortened versions for each
+//	@Tags			urls
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		[]ShortenBatchReq	true	"Batch of URLs to shorten"
+//	@Success		201		{array}		ShortenBatchResp
+//	@Failure		400		{string}	string	"Bad request or empty batch"
+//	@Failure		500		{string}	string	"Internal server error"
+//	@Router			/api/shorten/batch [post]
 func (h *Handlers) ShortenBatch(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 

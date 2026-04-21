@@ -14,6 +14,19 @@ type ShortenResp struct {
 	Result string `json:"result"`
 }
 
+// Shorten godoc
+//
+//	@Summary		Shorten URL (JSON)
+//	@Description	Accepts a URL as JSON and returns the shortened URL
+//	@Tags			urls
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		ShortenReq	true	"URL to shorten"
+//	@Success		201		{object}	ShortenResp
+//	@Failure		400		{string}	string		"Bad request"
+//	@Failure		409		{object}	ShortenResp	"URL already shortened"
+//	@Failure		500		{string}	string		"Internal server error"
+//	@Router			/api/shorten [post]
 func (h *Handlers) Shorten(w http.ResponseWriter, r *http.Request) {
 	var req ShortenReq
 

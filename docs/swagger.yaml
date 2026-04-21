@@ -1,0 +1,245 @@
+definitions:
+  handlers.ShortenBatchReq:
+    properties:
+      correlation_id:
+        type: string
+      original_url:
+        type: string
+    type: object
+  handlers.ShortenBatchResp:
+    properties:
+      correlation_id:
+        type: string
+      short_url:
+        type: string
+    type: object
+  handlers.ShortenReq:
+    properties:
+      url:
+        type: string
+    type: object
+  handlers.ShortenResp:
+    properties:
+      result:
+        type: string
+    type: object
+  handlers.UserUrlsResp:
+    properties:
+      original_url:
+        type: string
+      short_url:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: A URL shortening service with JWT cookie authentication.
+  title: URL Shortener API
+  version: "1.0"
+paths:
+  /:
+    post:
+      consumes:
+      - text/plain
+      description: Accepts a plain-text URL in the body and returns the shortened
+        URL
+      parameters:
+      - description: Original URL
+        in: body
+        name: url
+        required: true
+        schema:
+          type: string
+      produces:
+      - text/plain
+      responses:
+        "201":
+          description: Short URL
+          schema:
+            type: string
+        "400":
+          description: Empty body
+          schema:
+            type: string
+        "409":
+          description: URL already shortened
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Shorten URL (plain text)
+      tags:
+      - urls
+  /{alias}:
+    get:
+      description: Redirects to the original URL by short alias
+      parameters:
+      - description: Short URL alias
+        in: path
+        name: alias
+        required: true
+        type: string
+      responses:
+        "307":
+          description: Temporary Redirect
+        "400":
+          description: Alias is required
+          schema:
+            type: string
+        "404":
+          description: Not found
+          schema:
+            type: string
+        "410":
+          description: URL has been deleted
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Redirect to original URL
+      tags:
+      - urls
+  /api/shorten:
+    post:
+      consumes:
+      - application/json
+      description: Accepts a URL as JSON and returns the shortened URL
+      parameters:
+      - description: URL to shorten
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ShortenReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.ShortenResp'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "409":
+          description: URL already shortened
+          schema:
+            $ref: '#/definitions/handlers.ShortenResp'
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Shorten URL (JSON)
+      tags:
+      - urls
+  /api/shorten/batch:
+    post:
+      consumes:
+      - application/json
+      description: Accepts URLs and returns shortened versions for each
+      parameters:
+      - description: Batch of URLs to shorten
+        in: body
+        name: request
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/handlers.ShortenBatchReq'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/handlers.ShortenBatchResp'
+            type: array
+        "400":
+          description: Bad request or empty batch
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Batch shorten URLs
+      tags:
+      - urls
+  /api/user/urls:
+    delete:
+      consumes:
+      - application/json
+      description: Asynchronously deletes the given short URL aliases belonging to
+        the authenticated user
+      parameters:
+      - description: List of aliases to delete
+        in: body
+        name: aliases
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Bad request or empty list
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - CookieAuth: []
+      summary: Delete user's URLs
+      tags:
+      - user
+    get:
+      description: Returns all URLs shortened by the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.UserUrlsResp'
+            type: array
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      security:
+      - CookieAuth: []
+      summary: Get user's URLs
+      tags:
+      - user
+  /ping:
+    get:
+      description: Check database connectivity
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+      summary: Health check
+      tags:
+      - health
+swagger: "2.0"

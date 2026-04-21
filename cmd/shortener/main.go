@@ -1,3 +1,8 @@
+// Package main URL Shortener API.
+//
+//	@title					URL Shortener API
+//	@version				1.0
+//	@description			A URL shortening service with JWT cookie authentication.
 package main
 
 import (
@@ -5,6 +10,7 @@ import (
 	"log"
 	"net/http"
 
+	_ "github.com/Arturikou/urlshortener/docs"
 	"github.com/Arturikou/urlshortener/internal/clients/httpaudit"
 	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"

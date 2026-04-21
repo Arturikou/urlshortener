@@ -13,6 +13,18 @@ type UserUrlsResp struct {
 	OriginalURL string `json:"original_url"`
 }
 
+// UserUrls godoc
+//
+//	@Summary		Get user's URLs
+//	@Description	Returns all URLs shortened by the authenticated user
+//	@Tags			user
+//	@Produce		json
+//	@Security		CookieAuth
+//	@Success		200	{array}		UserUrlsResp
+//	@Success		204
+//	@Failure		401	{string}	string	"Unauthorized"
+//	@Failure		500	{string}	string	"Internal server error"
+//	@Router			/api/user/urls [get]
 func (h *Handlers) UserUrls(w http.ResponseWriter, r *http.Request) {
 	userID, err := middleware.UserIDFromContext(r.Context())
 	if err != nil {
@@ -56,6 +68,19 @@ func (h *Handlers) UserUrls(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DeleteUserURLs godoc
+//
+//	@Summary		Delete user's URLs
+//	@Description	Asynchronously deletes the given short URL aliases belonging to the authenticated user
+//	@Tags			user
+//	@Accept			json
+//	@Security		CookieAuth
+//	@Param			aliases	body	[]string	true	"List of aliases to delete"
+//	@Success		202
+//	@Failure		400	{string}	string	"Bad request or empty list"
+//	@Failure		401	{string}	string	"Unauthorized"
+//	@Failure		500	{string}	string	"Internal server error"
+//	@Router			/api/user/urls [delete]
 func (h *Handlers) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
 	userID, err := middleware.UserIDFromContext(r.Context())
 	if err != nil {
