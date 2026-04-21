@@ -14,9 +14,11 @@
 # Binaries
 cmd/shortener/main
 cmd/shortener/shortener
+shortenertest-darwin-arm64
 
 # Dependency directories (remove the comment below to include it)
 vendor/
+cmd/client/HTTPClient.go
 
 # IDEs directories
 .idea
