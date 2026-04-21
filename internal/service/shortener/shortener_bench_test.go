@@ -11,6 +11,8 @@ import (
 	"go.uber.org/zap"
 )
 
+// --- Benchmarks ---
+
 func newBenchShortener() *Shortener {
 	return New(&stubURLRepo{}, &stubUserURLRepo{}, &stubTransactor{}, &stubAuditManager{}, zap.NewNop().Sugar())
 }

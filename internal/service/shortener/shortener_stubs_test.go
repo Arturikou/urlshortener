@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// --- stubs ---
+
 type stubURLRepo struct{}
 
 func (s *stubURLRepo) AddURL(_ context.Context, _ models.URLData) (int64, error) {

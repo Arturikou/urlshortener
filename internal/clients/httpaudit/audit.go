@@ -1,3 +1,4 @@
+// Package httpaudit provides an HTTP Audit client and methods to send events
 package httpaudit
 
 import (
@@ -15,6 +16,7 @@ type Client struct {
 	logger     *zap.SugaredLogger
 }
 
+// New creates a new HTTP Audit client
 func New(
 	address string,
 	logger *zap.SugaredLogger,
@@ -26,6 +28,7 @@ func New(
 	}
 }
 
+// Notify sends an event to a configured address via an HTTP POST request.
 func (c *Client) Notify(event am.Event) {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(event); err != nil {

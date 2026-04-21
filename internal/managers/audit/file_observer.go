@@ -1,3 +1,4 @@
+// Package audit provides an Audit observer that writes the event to the file
 package audit
 
 import (
@@ -17,6 +18,7 @@ type FileObserver struct {
 	logger  *zap.SugaredLogger
 }
 
+// NewFileObserver creates a new File Audit observer
 func NewFileObserver(
 	fileName string,
 	logger *zap.SugaredLogger,
@@ -35,6 +37,7 @@ func NewFileObserver(
 	}, nil
 }
 
+// Notify writes the event to the file
 func (p *FileObserver) Notify(event Event) {
 	p.mu.Lock()
 	defer p.mu.Unlock()

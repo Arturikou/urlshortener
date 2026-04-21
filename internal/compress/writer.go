@@ -1,3 +1,4 @@
+// Package compress implements gzip compression for http.ResponseWriter.
 package compress
 
 import (

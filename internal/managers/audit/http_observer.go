@@ -1,3 +1,4 @@
+// Package audit provides an Audit observer that sends the audit events to an HTTP client
 package audit
 
 import (
@@ -13,6 +14,7 @@ type HTTPObserver struct {
 	logger *zap.SugaredLogger
 }
 
+// NewHTTPObserver creates a new HTTP Audit observer
 func NewHTTPObserver(
 	client HTTPClient,
 	logger *zap.SugaredLogger,
@@ -23,6 +25,7 @@ func NewHTTPObserver(
 	}
 }
 
+// Notify sends the event to the Audit HTTP client
 func (h *HTTPObserver) Notify(event Event) {
 	h.client.Notify(event)
 }

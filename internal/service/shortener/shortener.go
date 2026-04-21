@@ -1,3 +1,4 @@
+// package shortener contains the business logic for URL shortening.
 package shortener
 
 import (
@@ -66,6 +67,7 @@ type AddURLResult struct {
 	IsInsert bool
 }
 
+// AddURL attempts to create a shortened alias for the provided original URL
 func (s *Shortener) AddURL(ctx context.Context, originalURL string) (AddURLResult, error) {
 	userID, err := middleware.UserIDFromContext(ctx)
 	if err != nil {
@@ -105,6 +107,7 @@ func (s *Shortener) AddURL(ctx context.Context, originalURL string) (AddURLResul
 	return AddURLResult{}, fmt.Errorf("failed to generate unique id after %d attempts", defaultMaxRetries)
 }
 
+// AddURLs processes a batch of URLs for shortening, assigning aliases, and saving them in the repository in batches.
 func (s *Shortener) AddURLs(ctx context.Context, batches []models.ShortenBatch) ([]models.ShortenBatch, error) {
 	batchSize := 1000
 
@@ -154,6 +157,7 @@ func (s *Shortener) AddURLs(ctx context.Context, batches []models.ShortenBatch) 
 	return batches, nil
 }
 
+// GetURL retrieves the original URL associated with the given alias from the repository and audits the access event.
 func (s *Shortener) GetURL(ctx context.Context, alias string) (string, error) {
 	urlRecord, err := s.urlRepo.GetByAlias(ctx, alias)
 	if err != nil {
@@ -175,10 +179,12 @@ func (s *Shortener) GetURL(ctx context.Context, alias string) (string, error) {
 	return urlRecord.URL, nil
 }
 
+// GetUserURLs retrieves all shortened URLs associated with a specific user ID from the repository.
 func (s *Shortener) GetUserURLs(ctx context.Context, userID uuid.UUID) ([]models.UserUrls, error) {
 	return s.userURLRepo.GetUserURLs(ctx, userID)
 }
 
+// addUserURL associates a user with a shortened URL, creating the URL in the repository if it does not already exist.
 func (s *Shortener) addUserURL(ctx context.Context, userID uuid.UUID, urlData models.URLData) (AddURLResult, error) {
 	err := s.transactor.Transaction(ctx, func(ctx context.Context) error {
 		urlID, err := s.urlRepo.AddURL(ctx, urlData)
@@ -210,6 +216,7 @@ func (s *Shortener) addUserURL(ctx context.Context, userID uuid.UUID, urlData mo
 	return AddURLResult{}, err
 }
 
+// DeleteUserURLs removes a list of URLs associated with a user from the repository based on their aliases.
 func (s *Shortener) DeleteUserURLs(ctx context.Context, userID uuid.UUID, aliases []string) error {
 	if err := s.urlRepo.DeleteURLs(ctx, userID, aliases); err != nil {
 		return fmt.Errorf("failed to delete urls: %w", err)
@@ -218,6 +225,7 @@ func (s *Shortener) DeleteUserURLs(ctx context.Context, userID uuid.UUID, aliase
 	return nil
 }
 
+// generateAlias generates a random URL-safe string of 16 bytes, encodes it using base64, and returns it.
 func generateAlias() (string, error) {
 	b := make([]byte, 16)
 	_, err := rand.Read(b)

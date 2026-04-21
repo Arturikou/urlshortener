@@ -18,6 +18,7 @@ type Claims struct {
 	UserID string
 }
 
+// BuildJWTString generates and signs a JWT string for the given user ID using HS256 and returns it or an error.
 func BuildJWTString(userID uuid.UUID) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -34,6 +35,7 @@ func BuildJWTString(userID uuid.UUID) (string, error) {
 	return tokenString, nil
 }
 
+// GetUserID extracts the user ID from the JWT string and returns it or an error.
 func GetUserID(tokenString string) (uuid.UUID, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims,

@@ -1,3 +1,4 @@
+// Package deleteworker provides a worker for deleting URLs.
 package deleteworker
 
 import (
@@ -38,10 +39,12 @@ func New(deleter Deleter, logger *zap.SugaredLogger) *Worker {
 	}
 }
 
+// EnqueueDelete queues a delete task with the specified user ID and list of aliases into the worker's delete channel.
 func (w *Worker) EnqueueDelete(userID uuid.UUID, aliases []string) {
 	w.deleteCh <- deleteTask{userID: userID, aliases: aliases}
 }
 
+// Run starts the worker's loop to process delete tasks, flushing tasks periodically or when the flush limit is reached.
 func (w *Worker) Run(ctx context.Context) {
 	ticker := time.NewTicker(flushInterval)
 	defer ticker.Stop()
@@ -67,6 +70,7 @@ func (w *Worker) Run(ctx context.Context) {
 	}
 }
 
+// flush deletes URLs for the specified user IDs and aliases, returning the remaining tasks.
 func (w *Worker) flush(ctx context.Context, tasks []deleteTask) []deleteTask {
 	if len(tasks) == 0 {
 		return tasks
