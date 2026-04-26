@@ -11,11 +11,10 @@ import (
 )
 
 type FileObserver struct {
-	file    *os.File
-	writer  *bufio.Writer
-	encoder *json.Encoder
-	mu      sync.Mutex
-	logger  *zap.SugaredLogger
+	file   *os.File
+	writer *bufio.Writer
+	mu     sync.Mutex
+	logger *zap.SugaredLogger
 }
 
 // NewFileObserver creates a new File Audit observer
@@ -30,22 +29,31 @@ func NewFileObserver(
 
 	writer := bufio.NewWriter(file)
 	return &FileObserver{
-		file:    file,
-		writer:  writer,
-		encoder: json.NewEncoder(writer),
-		logger:  logger,
+		file:   file,
+		writer: writer,
+		logger: logger,
 	}, nil
 }
 
 // Notify writes the event to the file
 func (p *FileObserver) Notify(event Event) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if err := p.encoder.Encode(event); err != nil {
-		p.logger.Errorw("error encoding event", "error", err)
+	data, err := json.Marshal(event)
+	if err != nil {
+		p.logger.Errorw("failed to marshal event", "error", err)
+		return
 	}
 
-	if err := p.writer.Flush(); err != nil {
-		p.logger.Errorw("error flushing writer", "error", err)
+	data = append(data, '\n')
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if _, err = p.writer.Write(data); err != nil {
+		p.logger.Errorw("error writing to buffer", "error", err)
+		return
+	}
+
+	if err = p.writer.Flush(); err != nil {
+		p.logger.Errorw("error flushing buffer", "error", err)
 	}
 }

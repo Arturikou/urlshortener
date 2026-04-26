@@ -35,7 +35,7 @@ type UserURLRepo interface {
 }
 
 type AuditManager interface {
-	NotifyAll(event audit.Event)
+	NotifyAll(ctx context.Context, event audit.Event)
 }
 
 type Shortener struct {
@@ -87,7 +87,7 @@ func (s *Shortener) AddURL(ctx context.Context, originalURL string) (AddURLResul
 
 		addURLResult, err := s.addUserURL(ctx, userID, urlData)
 		if err == nil {
-			s.auditManager.NotifyAll(audit.Event{
+			s.auditManager.NotifyAll(ctx, audit.Event{
 				Timestamp: time.Now().Unix(),
 				Action:    "shorten",
 				UserID:    userID,
@@ -169,7 +169,7 @@ func (s *Shortener) GetURL(ctx context.Context, alias string) (string, error) {
 		return "", fmt.Errorf("userID not found in context: %w", err)
 	}
 
-	s.auditManager.NotifyAll(audit.Event{
+	s.auditManager.NotifyAll(ctx, audit.Event{
 		Timestamp: time.Now().Unix(),
 		Action:    "follow",
 		UserID:    userID,

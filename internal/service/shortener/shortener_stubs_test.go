@@ -50,4 +50,4 @@ func (s *stubTransactor) Transaction(ctx context.Context, fn func(context.Contex
 
 type stubAuditManager struct{}
 
-func (n *stubAuditManager) NotifyAll(_ audit.Event) {}
+func (n *stubAuditManager) NotifyAll(_ context.Context, _ audit.Event) {}

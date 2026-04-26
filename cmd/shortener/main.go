@@ -26,7 +26,10 @@ import (
 )
 
 func main() {
-	cfg := config.MustLoad()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("can't load config: %v", err)
+	}
 	ctx := context.Background()
 
 	l, err := logging.New(cfg.LogLevel)
@@ -44,7 +47,7 @@ func main() {
 	if st.Closer != nil {
 		defer st.Closer()
 	}
-	auditManager := audit.NewManager()
+	auditManager := audit.NewManager(ctx)
 	if cfg.Audit.AuditFile != "" {
 		fileObs, err := audit.NewFileObserver(cfg.Audit.AuditFile, sl)
 		if err != nil {
@@ -55,8 +58,7 @@ func main() {
 	}
 	if cfg.Audit.AuditURL != "" {
 		client := httpaudit.New(cfg.Audit.AuditURL, sl)
-		httpObs := audit.NewHTTPObserver(client, sl)
-		auditManager.Register(httpObs)
+		auditManager.Register(client)
 	}
 
 	urlService := shortener.New(st.URLRepo, st.UserURLRepo, st.Transactor, auditManager, sl)

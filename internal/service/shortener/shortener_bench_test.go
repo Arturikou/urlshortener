@@ -13,7 +13,8 @@ import (
 
 // --- Benchmarks ---
 
-func newBenchShortener() *Shortener {
+func newBenchShortener(b *testing.B) *Shortener {
+	b.Helper()
 	return New(&stubURLRepo{}, &stubUserURLRepo{}, &stubTransactor{}, &stubAuditManager{}, zap.NewNop().Sugar())
 }
 
@@ -25,27 +26,27 @@ func BenchmarkGenerateAlias(b *testing.B) {
 }
 
 func BenchmarkAddURL(b *testing.B) {
-	s := newBenchShortener()
+	s := newBenchShortener(b)
 	ctx := context.WithValue(context.Background(), middleware.ContextKeyUserID, uuid.New())
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = s.AddURL(ctx, fmt.Sprintf("https://practicum.yandex.com/%d", i))
+	for b.Loop() {
+		_, _ = s.AddURL(ctx, "https://practicum.yandex.com")
 	}
 }
 
 func BenchmarkGetURL(b *testing.B) {
-	s := newBenchShortener()
+	s := newBenchShortener(b)
 	ctx := context.WithValue(context.Background(), middleware.ContextKeyUserID, uuid.New())
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = s.GetURL(ctx, "EwHXdJfB")
 	}
 }
 
 func BenchmarkAddURLs(b *testing.B) {
-	svc := newBenchShortener()
+	svc := newBenchShortener(b)
 	ctx := context.WithValue(context.Background(), middleware.ContextKeyUserID, uuid.New())
 
 	const batchSize = 100
@@ -59,10 +60,12 @@ func BenchmarkAddURLs(b *testing.B) {
 
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
+		b.StopTimer()
 		for j := range batches {
 			batches[j].Alias = ""
 		}
+		b.StartTimer()
 		_, _ = svc.AddURLs(ctx, batches)
 	}
 }

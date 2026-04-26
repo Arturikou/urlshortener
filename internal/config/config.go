@@ -3,7 +3,6 @@ package config
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -32,7 +31,7 @@ type AuditConfig struct {
 	AuditURL  string `env:"AUDIT_URL"`
 }
 
-func MustLoad() *Config {
+func Load() (*Config, error) {
 	cfg := &Config{}
 
 	flag.StringVar(&cfg.ServerAddr, "a", "localhost:8080", "The address to listen on for HTTP requests.")
@@ -45,14 +44,14 @@ func MustLoad() *Config {
 	flag.Parse()
 
 	if err := cleanenv.ReadEnv(cfg); err != nil {
-		log.Fatalf("failed to read env variables: %v", err)
+		return nil, fmt.Errorf("failed to read env variables: %w", err)
 	}
 
 	if err := cfg.validate(); err != nil {
-		log.Fatalf("config validation failed: %v", err)
+		return nil, fmt.Errorf("config validation failed: %w", err)
 	}
 
-	return cfg
+	return cfg, nil
 }
 
 func (cfg *Config) validate() error {
