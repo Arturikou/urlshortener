@@ -1,9 +1,10 @@
 package middleware
 
 import (
-	"github.com/Arturikou/urlshortener/internal/compress"
 	"net/http"
 	"strings"
+
+	"github.com/Arturikou/urlshortener/internal/compress"
 )
 
 func Gzip(next http.Handler) http.Handler {

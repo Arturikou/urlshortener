@@ -2,8 +2,9 @@ package filestore
 
 import (
 	"encoding/json"
-	"github.com/Arturikou/urlshortener/internal/models"
 	"os"
+
+	"github.com/Arturikou/urlshortener/internal/models"
 )
 
 type Consumer struct {

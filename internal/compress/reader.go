@@ -1,3 +1,4 @@
+// Package compress implements gzip compression for http.Request.
 package compress
 
 import (

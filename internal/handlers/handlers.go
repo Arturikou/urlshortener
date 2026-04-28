@@ -15,7 +15,7 @@ import (
 type URLService interface {
 	AddURL(ctx context.Context, originalURL string) (shortener.AddURLResult, error)
 	GetURL(ctx context.Context, alias string) (string, error)
-	AddURLs(ctx context.Context, shortenBatch []*models.ShortenBatch) ([]models.ShortenBatch, error)
+	AddURLs(ctx context.Context, shortenBatch []models.ShortenBatch) ([]models.ShortenBatch, error)
 	GetUserURLs(ctx context.Context, userID uuid.UUID) ([]models.UserUrls, error)
 }
 

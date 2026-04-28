@@ -6,6 +6,7 @@ import (
 	mw "github.com/Arturikou/urlshortener/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 )
 
@@ -15,6 +16,8 @@ func New(h *handlers.Handlers, l *zap.Logger) *chi.Mux {
 	r.Use(middleware.Recoverer)
 	r.Use(logging.RequestLogger(l))
 	r.Use(mw.Gzip)
+
+	r.Get("/swagger/*", httpSwagger.Handler())
 
 	r.Route("/", func(r chi.Router) {
 		r.With(mw.OptionalAuth).Get("/ping", h.Ping)

@@ -85,7 +85,7 @@ func (_c *MockURLService_AddURL_Call) RunAndReturn(run func(context.Context, str
 }
 
 // AddURLs provides a mock function with given fields: ctx, shortenBatch
-func (_m *MockURLService) AddURLs(ctx context.Context, shortenBatch []*models.ShortenBatch) ([]models.ShortenBatch, error) {
+func (_m *MockURLService) AddURLs(ctx context.Context, shortenBatch []models.ShortenBatch) ([]models.ShortenBatch, error) {
 	ret := _m.Called(ctx, shortenBatch)
 
 	if len(ret) == 0 {
@@ -94,10 +94,10 @@ func (_m *MockURLService) AddURLs(ctx context.Context, shortenBatch []*models.Sh
 
 	var r0 []models.ShortenBatch
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []*models.ShortenBatch) ([]models.ShortenBatch, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []models.ShortenBatch) ([]models.ShortenBatch, error)); ok {
 		return rf(ctx, shortenBatch)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []*models.ShortenBatch) []models.ShortenBatch); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []models.ShortenBatch) []models.ShortenBatch); ok {
 		r0 = rf(ctx, shortenBatch)
 	} else {
 		if ret.Get(0) != nil {
@@ -105,7 +105,7 @@ func (_m *MockURLService) AddURLs(ctx context.Context, shortenBatch []*models.Sh
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []*models.ShortenBatch) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, []models.ShortenBatch) error); ok {
 		r1 = rf(ctx, shortenBatch)
 	} else {
 		r1 = ret.Error(1)
@@ -121,14 +121,14 @@ type MockURLService_AddURLs_Call struct {
 
 // AddURLs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - shortenBatch []*models.ShortenBatch
+//   - shortenBatch []models.ShortenBatch
 func (_e *MockURLService_Expecter) AddURLs(ctx interface{}, shortenBatch interface{}) *MockURLService_AddURLs_Call {
 	return &MockURLService_AddURLs_Call{Call: _e.mock.On("AddURLs", ctx, shortenBatch)}
 }
 
-func (_c *MockURLService_AddURLs_Call) Run(run func(ctx context.Context, shortenBatch []*models.ShortenBatch)) *MockURLService_AddURLs_Call {
+func (_c *MockURLService_AddURLs_Call) Run(run func(ctx context.Context, shortenBatch []models.ShortenBatch)) *MockURLService_AddURLs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]*models.ShortenBatch))
+		run(args[0].(context.Context), args[1].([]models.ShortenBatch))
 	})
 	return _c
 }
@@ -138,7 +138,7 @@ func (_c *MockURLService_AddURLs_Call) Return(_a0 []models.ShortenBatch, _a1 err
 	return _c
 }
 
-func (_c *MockURLService_AddURLs_Call) RunAndReturn(run func(context.Context, []*models.ShortenBatch) ([]models.ShortenBatch, error)) *MockURLService_AddURLs_Call {
+func (_c *MockURLService_AddURLs_Call) RunAndReturn(run func(context.Context, []models.ShortenBatch) ([]models.ShortenBatch, error)) *MockURLService_AddURLs_Call {
 	_c.Call.Return(run)
 	return _c
 }

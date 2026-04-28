@@ -34,7 +34,7 @@ func (db *DB) AddURL(ctx context.Context, data models.URLData) (int64, error) {
 	return id, nil
 }
 
-func (db *DB) SaveBatch(ctx context.Context, data []*models.ShortenBatch) ([]*models.ShortenBatch, error) {
+func (db *DB) SaveBatch(ctx context.Context, data []models.ShortenBatch) ([]models.ShortenBatch, error) {
 	batch := &pgx.Batch{}
 
 	for _, rec := range data {

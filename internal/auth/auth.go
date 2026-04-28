@@ -11,11 +11,14 @@ import (
 const tokenExp = time.Minute * 15
 const secretKey = "supersecretkey"
 
+var secretKeyBytes = []byte(secretKey)
+
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string
 }
 
+// BuildJWTString generates and signs a JWT string for the given user ID using HS256 and returns it or an error.
 func BuildJWTString(userID uuid.UUID) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -24,7 +27,7 @@ func BuildJWTString(userID uuid.UUID) (string, error) {
 		UserID: userID.String(),
 	})
 
-	tokenString, err := token.SignedString([]byte(secretKey))
+	tokenString, err := token.SignedString(secretKeyBytes)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate token: %w", err)
 	}
@@ -32,6 +35,7 @@ func BuildJWTString(userID uuid.UUID) (string, error) {
 	return tokenString, nil
 }
 
+// GetUserID extracts the user ID from the JWT string and returns it or an error.
 func GetUserID(tokenString string) (uuid.UUID, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims,
@@ -39,7 +43,7 @@ func GetUserID(tokenString string) (uuid.UUID, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 			}
-			return []byte(secretKey), nil
+			return secretKeyBytes, nil
 		})
 
 	if err != nil {
