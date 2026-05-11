@@ -2,15 +2,15 @@ package pool
 
 import "sync"
 
-type Resettable interface {
+type Resetter interface {
 	Reset()
 }
 
-type Pool[T Resettable] struct {
+type Pool[T Resetter] struct {
 	p sync.Pool
 }
 
-func New[T Resettable](newFn func() T) *Pool[T] {
+func New[T Resetter](newFn func() T) *Pool[T] {
 	return &Pool[T]{
 		p: sync.Pool{
 			New: func() any { return newFn() },

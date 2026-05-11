@@ -22,6 +22,9 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 	insp.Preorder([]ast.Node{(*ast.FuncDecl)(nil)}, func(n ast.Node) {
 		fn := n.(*ast.FuncDecl)
+		if isGenerated(fileFor(pass, fn.Pos())) {
+			return
+		}
 		inMainFunc := pass.Pkg.Name() == "main" && fn.Name.Name == "main"
 
 		ast.Inspect(fn.Body, func(node ast.Node) bool {
@@ -42,9 +45,6 @@ func run(pass *analysis.Pass) (interface{}, error) {
 func checkPanic(pass *analysis.Pass, call *ast.CallExpr) {
 	ident, ok := call.Fun.(*ast.Ident)
 	if !ok || ident.Name != "panic" {
-		return
-	}
-	if isGenerated(fileFor(pass, call.Pos())) {
 		return
 	}
 	pass.Reportf(call.Pos(), "use of built-in panic")

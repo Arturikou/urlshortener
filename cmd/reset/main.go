@@ -56,12 +56,11 @@ type structInfo struct {
 func processDir(dir string) error {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil
+		return fmt.Errorf("read dir %s: %w", dir, err)
 	}
 
 	fset := token.NewFileSet()
 	pkgStructs := map[string][]structInfo{}
-	pkgSeen := map[string]string{}
 
 	for _, entry := range entries {
 		name := entry.Name()
@@ -75,18 +74,14 @@ func processDir(dir string) error {
 		path := filepath.Join(dir, name)
 		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
 		if err != nil {
-			continue
+			return fmt.Errorf("parse error %s: %w", path, err)
 		}
 
-		pkgName := file.Name.Name
-		pkgSeen[pkgName] = pkgName
-
 		structs := collectStructs(file)
-		pkgStructs[pkgName] = append(pkgStructs[pkgName], structs...)
+		pkgStructs[file.Name.Name] = append(pkgStructs[file.Name.Name], structs...)
 	}
 
 	for pkgName, structs := range pkgStructs {
-		_ = pkgSeen[pkgName]
 		if len(structs) == 0 {
 			continue
 		}
@@ -154,8 +149,7 @@ func writeResetFile(dir, pkgName string, structs []structInfo) error {
 
 	src, err := format.Source(buf.Bytes())
 	if err != nil {
-		src = buf.Bytes()
-		fmt.Fprintf(os.Stderr, "format error in %s: %v\n", dir, err)
+		return fmt.Errorf("format source: %w", err)
 	}
 
 	return os.WriteFile(filepath.Join(dir, "reset.gen.go"), src, 0o644)
