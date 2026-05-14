@@ -7,6 +7,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,12 +19,10 @@ import (
 	"github.com/Arturikou/urlshortener/internal/logging"
 	"github.com/Arturikou/urlshortener/internal/managers/audit"
 	"github.com/Arturikou/urlshortener/internal/router"
+	"github.com/Arturikou/urlshortener/internal/server"
 	"github.com/Arturikou/urlshortener/internal/service/shortener"
 	"github.com/Arturikou/urlshortener/internal/storage"
 	"github.com/Arturikou/urlshortener/internal/workers/deleteworker"
-	"go.uber.org/zap"
-
-	_ "net/http/pprof"
 )
 
 var (
@@ -83,21 +82,12 @@ func main() {
 	)
 	r := router.New(h, l)
 
-	srv := &http.Server{
-		Addr:    cfg.ServerAddr,
-		Handler: r,
-	}
+	srv := server.New(cfg.Server, r, l)
 
-	go func() {
-		log.Println("pprof listening on :6060")
-		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
-			sl.Warnf("pprof server error: %v", err)
-		}
-	}()
+	go srv.RunPprof()
 
-	l.Info("starting server", zap.String("addr", cfg.ServerAddr))
-	if err := srv.ListenAndServe(); err != nil {
-		log.Fatalf("server stopped with error: %v", err)
+	if err := srv.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		sl.Fatalf("server fatal error: %v", err)
 	}
 }
 

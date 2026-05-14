@@ -3,19 +3,26 @@ package config
 import (
 	"flag"
 	"fmt"
-	"os"
-	"path/filepath"
 
+	"github.com/Arturikou/urlshortener/internal/utils"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	ServerAddr      string `env:"SERVER_ADDRESS"`
+	Server          ServerConfig
 	LogLevel        string `env:"LOG_LEVEL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	Handlers        HandlersConfig
 	Database        DatabaseConfig
 	Audit           AuditConfig
+}
+
+type ServerConfig struct {
+	Addr        string `env:"SERVER_ADDRESS"`
+	PprofAddr   string `env:"PPROF_ADDRESS" env-default:"localhost:6060"`
+	EnableHTTPS bool   `env:"ENABLE_HTTPS"`
+	CertFile    string `env:"CERT_FILE" env-default:"cert.pem"`
+	KeyFile     string `env:"KEY_FILE" env-default:"key.pem"`
 }
 
 type HandlersConfig struct {
@@ -34,7 +41,8 @@ type AuditConfig struct {
 func Load() (*Config, error) {
 	cfg := &Config{}
 
-	flag.StringVar(&cfg.ServerAddr, "a", "localhost:8080", "The address to listen on for HTTP requests.")
+	flag.StringVar(&cfg.Server.Addr, "a", "localhost:8080", "The address to listen on for HTTP requests.")
+	flag.BoolVar(&cfg.Server.EnableHTTPS, "s", false, "Enable HTTPS")
 	flag.StringVar(&cfg.LogLevel, "level", "info", "Log level")
 	flag.StringVar(&cfg.FileStoragePath, "f", "storage.json", "File storage path")
 	flag.StringVar(&cfg.Handlers.BaseAddr, "b", "http://localhost:8080", "The address for shortener response")
@@ -56,41 +64,16 @@ func Load() (*Config, error) {
 
 func (cfg *Config) validate() error {
 	if cfg.FileStoragePath != "" {
-		if err := validateFilePath(cfg.FileStoragePath); err != nil {
+		if err := utils.ValidateFilePath(cfg.FileStoragePath); err != nil {
 			return fmt.Errorf("storage path: %v", err)
 		}
 	}
 
 	if cfg.Audit.AuditFile != "" {
-		if err := validateFilePath(cfg.Audit.AuditFile); err != nil {
+		if err := utils.ValidateFilePath(cfg.Audit.AuditFile); err != nil {
 			return fmt.Errorf("audit file: %v", err)
 		}
 	}
-
-	return nil
-}
-
-func validateFilePath(filePath string) error {
-	absPath, err := filepath.Abs(filePath)
-	if err != nil {
-		return err
-	}
-	dir := filepath.Dir(absPath)
-
-	fileInfo, err := os.Stat(dir)
-	if err != nil {
-		return fmt.Errorf("directory check failed for %s: %w", dir, err)
-	}
-	if !fileInfo.IsDir() {
-		return fmt.Errorf("path %s is not a directory", dir)
-	}
-
-	tmp, err := os.CreateTemp(dir, "perm_check_")
-	if err != nil {
-		return fmt.Errorf("directory %s is not writable: %w", dir, err)
-	}
-	tmp.Close()
-	os.Remove(tmp.Name())
 
 	return nil
 }
