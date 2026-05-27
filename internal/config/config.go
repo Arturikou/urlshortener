@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/Arturikou/urlshortener/internal/utils"
 	"github.com/ilyakaznacheev/cleanenv"
@@ -21,11 +22,12 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Addr        string `env:"SERVER_ADDRESS"`
-	PprofAddr   string `env:"PPROF_ADDRESS" env-default:"localhost:6060"`
-	EnableHTTPS bool   `env:"ENABLE_HTTPS"`
-	CertFile    string `env:"CERT_FILE" env-default:"cert.pem"`
-	KeyFile     string `env:"KEY_FILE" env-default:"key.pem"`
+	Addr            string        `env:"SERVER_ADDRESS"`
+	PprofAddr       string        `env:"PPROF_ADDRESS" env-default:"localhost:6060"`
+	EnableHTTPS     bool          `env:"ENABLE_HTTPS"`
+	CertFile        string        `env:"CERT_FILE" env-default:"cert.pem"`
+	KeyFile         string        `env:"KEY_FILE" env-default:"key.pem"`
+	ShutdownTimeout time.Duration `env:"SHUTDOWN_TIMEOUT" env-default:"10s"`
 }
 
 type HandlersConfig struct {
