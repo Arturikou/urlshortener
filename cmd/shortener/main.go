@@ -96,7 +96,7 @@ func main() {
 	})
 
 	g.Go(func() error {
-		if err = srv.RunPprof(gCtx); err != nil {
+		if err := srv.RunPprof(gCtx); err != nil {
 			sl.Warnf("pprof server: %v", err)
 		}
 
@@ -107,7 +107,7 @@ func main() {
 		return srv.Run(gCtx)
 	})
 
-	if err = g.Wait(); err != nil {
+	if err := g.Wait(); err != nil {
 		sl.Errorf("server fatal error: %v", err)
 	}
 }
