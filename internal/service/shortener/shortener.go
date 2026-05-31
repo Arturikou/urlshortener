@@ -26,12 +26,14 @@ type URLRepo interface {
 	GetByAlias(ctx context.Context, alias string) (models.URLRecord, error)
 	SaveBatch(ctx context.Context, data []models.ShortenBatch) ([]models.ShortenBatch, error)
 	DeleteURLs(ctx context.Context, userID uuid.UUID, aliases []string) error
+	CountUrls(ctx context.Context) (int64, error)
 }
 
 //go:generate mockery
 type UserURLRepo interface {
 	AddUserURL(ctx context.Context, userID uuid.UUID, urlID int64) error
 	GetUserURLs(ctx context.Context, userID uuid.UUID) ([]models.UserUrls, error)
+	CountUsers(ctx context.Context) (int64, error)
 }
 
 type AuditManager interface {

@@ -19,6 +19,7 @@ type Config struct {
 	Handlers        HandlersConfig
 	Database        DatabaseConfig
 	Audit           AuditConfig
+	TrustedSubnet   string `env:"TRUSTED_SUBNET"`
 }
 
 type ServerConfig struct {
@@ -49,6 +50,7 @@ type jsonConfig struct {
 	FileStoragePath string `json:"file_storage_path"`
 	DatabaseDSN     string `json:"database_dsn"`
 	EnableHTTPS     bool   `json:"enable_https"`
+	TrustedSubnet   string `json:"trusted_subnet"`
 }
 
 // Load priority: ENV > flags > JSON > defaults
@@ -96,6 +98,7 @@ func parseFlags() *Config {
 	flag.StringVar(&cfg.Audit.AuditURL, "audit-url", "", "AuditConfig URL")
 	flag.StringVar(&cfg.ConfigPath, "c", "", "json config file path")
 	flag.StringVar(&cfg.ConfigPath, "config", "", "json config file path")
+	flag.StringVar(&cfg.TrustedSubnet, "t", "", "trusted subnet CIDR")
 	flag.Parse()
 
 	return cfg
@@ -135,6 +138,10 @@ func applyJSONConfig(cfg *Config) error {
 
 	if j.EnableHTTPS {
 		cfg.Server.EnableHTTPS = true
+	}
+
+	if cfg.TrustedSubnet == "" {
+		cfg.TrustedSubnet = j.TrustedSubnet
 	}
 
 	return nil

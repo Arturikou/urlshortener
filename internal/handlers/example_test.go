@@ -49,6 +49,10 @@ func (s *stubURLService) GetUserURLs(_ context.Context, _ uuid.UUID) ([]models.U
 	}, nil
 }
 
+func (s *stubURLService) GetStats(_ context.Context) (models.Stats, error) {
+	return models.Stats{}, nil
+}
+
 type stubDeleteEnqueuer struct{}
 
 func (e *stubDeleteEnqueuer) EnqueueDelete(_ uuid.UUID, _ []string) {}

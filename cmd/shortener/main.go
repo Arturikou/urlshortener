@@ -83,7 +83,7 @@ func main() {
 		cfg.Handlers,
 		sl,
 	)
-	r := router.New(h, l)
+	r := router.New(h, l, cfg.TrustedSubnet)
 
 	srv := server.New(cfg.Server, r, l)
 

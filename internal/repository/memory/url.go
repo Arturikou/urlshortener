@@ -106,3 +106,14 @@ func (s *Store) GetUserURLs(_ context.Context, _ uuid.UUID) ([]models.UserUrls, 
 func (s *Store) DeleteURLs(_ context.Context, _ uuid.UUID, _ []string) error {
 	return nil
 }
+
+func (s *Store) CountUrls(_ context.Context) (int64, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return int64(len(s.aliasToURL)), nil
+}
+
+func (s *Store) CountUsers(_ context.Context) (int64, error) {
+	return 0, nil
+}
