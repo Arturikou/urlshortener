@@ -67,7 +67,7 @@ func TestRouter_AddURL(t *testing.T) {
 	logger := zap.NewNop()
 	mockEnqueuer := new(mocks.MockDeleteEnqueuer)
 	h := handlers.New(mockService, mockEnqueuer, mockPinger, cfg, logger.Sugar())
-	ts := httptest.NewServer(New(h, logger))
+	ts := httptest.NewServer(New(h, logger, ""))
 	defer ts.Close()
 
 	resp := testRequest(t, ts, http.MethodPost, "/", strings.NewReader("https://practicum.yandex.ru"))
@@ -88,7 +88,7 @@ func TestRouter_GetURL(t *testing.T) {
 	logger := zap.NewNop()
 	mockEnqueuer := new(mocks.MockDeleteEnqueuer)
 	h := handlers.New(mockService, mockEnqueuer, mockPinger, cfg, logger.Sugar())
-	ts := httptest.NewServer(New(h, logger))
+	ts := httptest.NewServer(New(h, logger, ""))
 	defer ts.Close()
 
 	resp := testRequest(t, ts, http.MethodGet, "/EwHXdJfB", nil)
@@ -108,7 +108,7 @@ func TestRouter_ShortenURL(t *testing.T) {
 	logger := zap.NewNop()
 	mockEnqueuer := new(mocks.MockDeleteEnqueuer)
 	h := handlers.New(mockService, mockEnqueuer, mockPinger, cfg, logger.Sugar())
-	ts := httptest.NewServer(New(h, logger))
+	ts := httptest.NewServer(New(h, logger, ""))
 	defer ts.Close()
 
 	bodyData, _ := json.Marshal(handlers.ShortenReq{URL: "https://practicum.yandex.ru"})

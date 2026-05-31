@@ -113,7 +113,6 @@ func (db *DB) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, err
 
 func (db *DB) SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults {
 	return db.getQuerier(ctx).SendBatch(ctx, b)
-
 }
 
 func (db *DB) Close() {

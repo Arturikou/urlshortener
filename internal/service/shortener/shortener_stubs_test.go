@@ -32,6 +32,10 @@ func (s *stubURLRepo) DeleteURLs(_ context.Context, _ uuid.UUID, _ []string) err
 	return nil
 }
 
+func (s *stubURLRepo) CountUrls(_ context.Context) (int64, error) {
+	return 0, nil
+}
+
 type stubUserURLRepo struct{}
 
 func (s *stubUserURLRepo) AddUserURL(_ context.Context, _ uuid.UUID, _ int64) error {
@@ -40,6 +44,10 @@ func (s *stubUserURLRepo) AddUserURL(_ context.Context, _ uuid.UUID, _ int64) er
 
 func (s *stubUserURLRepo) GetUserURLs(_ context.Context, _ uuid.UUID) ([]models.UserUrls, error) {
 	return nil, nil
+}
+
+func (s *stubUserURLRepo) CountUsers(_ context.Context) (int64, error) {
+	return 0, nil
 }
 
 type stubTransactor struct{}

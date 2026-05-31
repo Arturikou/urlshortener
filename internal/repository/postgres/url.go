@@ -135,3 +135,15 @@ func (db *DB) DeleteURLs(ctx context.Context, userID uuid.UUID, aliases []string
 
 	return nil
 }
+
+func (db *DB) CountUrls(ctx context.Context) (int64, error) {
+	q := `SELECT COUNT(url) FROM url`
+
+	var cnt int64
+	err := db.QueryRow(ctx, q).Scan(&cnt)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count urls: %w", err)
+	}
+
+	return cnt, nil
+}

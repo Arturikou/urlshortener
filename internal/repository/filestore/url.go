@@ -58,3 +58,11 @@ func (fs *FileStore) AddUserURL(_ context.Context, _ uuid.UUID, _ int64) error {
 func (fs *FileStore) DeleteURLs(_ context.Context, _ uuid.UUID, _ []string) error {
 	return nil
 }
+
+func (fs *FileStore) CountUrls(ctx context.Context) (int64, error) {
+	return fs.memoryStore.CountUrls(ctx)
+}
+
+func (fs *FileStore) CountUsers(ctx context.Context) (int64, error) {
+	return fs.memoryStore.CountUsers(ctx)
+}
