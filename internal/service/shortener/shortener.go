@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/Arturikou/urlshortener/internal/managers/audit"
-	"github.com/Arturikou/urlshortener/internal/middleware"
 	"github.com/Arturikou/urlshortener/internal/models"
 	"github.com/Arturikou/urlshortener/internal/transactor"
+	"github.com/Arturikou/urlshortener/internal/userctx"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -71,7 +71,7 @@ type AddURLResult struct {
 
 // AddURL attempts to create a shortened alias for the provided original URL
 func (s *Shortener) AddURL(ctx context.Context, originalURL string) (AddURLResult, error) {
-	userID, err := middleware.UserIDFromContext(ctx)
+	userID, err := userctx.UserID(ctx)
 	if err != nil {
 		return AddURLResult{}, fmt.Errorf("userID not found in context: %w", err)
 	}
@@ -166,7 +166,7 @@ func (s *Shortener) GetURL(ctx context.Context, alias string) (string, error) {
 		return "", fmt.Errorf("can't get alias: %w", err)
 	}
 
-	userID, err := middleware.UserIDFromContext(ctx)
+	userID, err := userctx.UserID(ctx)
 	if err != nil {
 		return "", fmt.Errorf("userID not found in context: %w", err)
 	}

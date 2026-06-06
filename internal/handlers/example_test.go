@@ -11,9 +11,9 @@ import (
 
 	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"
-	"github.com/Arturikou/urlshortener/internal/middleware"
 	"github.com/Arturikou/urlshortener/internal/models"
 	"github.com/Arturikou/urlshortener/internal/service/shortener"
+	"github.com/Arturikou/urlshortener/internal/userctx"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -67,7 +67,7 @@ func newStubHandlers() *handlers.Handlers {
 
 // withUserID injects a user UUID into the request context.
 func withUserID(req *http.Request, id uuid.UUID) *http.Request {
-	ctx := context.WithValue(req.Context(), middleware.ContextKeyUserID, id)
+	ctx := userctx.WithUserID(req.Context(), id)
 	return req.WithContext(ctx)
 }
 

@@ -16,8 +16,10 @@ import (
 	"github.com/Arturikou/urlshortener/internal/clients/httpaudit"
 	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"
+	"github.com/Arturikou/urlshortener/internal/handlers/grpc"
 	"github.com/Arturikou/urlshortener/internal/logging"
 	"github.com/Arturikou/urlshortener/internal/managers/audit"
+	grpc2 "github.com/Arturikou/urlshortener/internal/middleware/grpc"
 	"github.com/Arturikou/urlshortener/internal/router"
 	"github.com/Arturikou/urlshortener/internal/server"
 	"github.com/Arturikou/urlshortener/internal/service/shortener"
@@ -75,6 +77,7 @@ func main() {
 
 	urlService := shortener.New(st.URLRepo, st.UserURLRepo, st.Transactor, auditManager, sl)
 	worker := deleteworker.New(urlService, sl)
+	grpcURLService := grpc.New(urlService, cfg.Handlers, sl)
 
 	h := handlers.New(
 		urlService,
@@ -85,7 +88,14 @@ func main() {
 	)
 	r := router.New(h, l, cfg.TrustedSubnet)
 
-	srv := server.New(cfg.Server, r, l)
+	httpSrv := server.New(cfg.Server, r, l)
+
+	authInterceptor := grpc2.NewAuthInterceptor(sl)
+	loggingInterceptor := grpc2.NewLoggingInterceptor(sl)
+	grpcSrv := server.NewGRPC(cfg.Server, grpcURLService, l,
+		loggingInterceptor.UnaryServerInterceptor(),
+		authInterceptor.UnaryServerInterceptor(),
+	)
 
 	// Завершение по сигналу
 	g, gCtx := errgroup.WithContext(ctx)
@@ -96,7 +106,7 @@ func main() {
 	})
 
 	g.Go(func() error {
-		if err := srv.RunPprof(gCtx); err != nil {
+		if err := httpSrv.RunPprof(gCtx); err != nil {
 			sl.Warnf("pprof server: %v", err)
 		}
 
@@ -104,7 +114,11 @@ func main() {
 	})
 
 	g.Go(func() error {
-		return srv.Run(gCtx)
+		return httpSrv.Run(gCtx)
+	})
+
+	g.Go(func() error {
+		return grpcSrv.Run(gCtx)
 	})
 
 	if err := g.Wait(); err != nil {

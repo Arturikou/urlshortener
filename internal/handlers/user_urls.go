@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/Arturikou/urlshortener/internal/middleware"
+	"github.com/Arturikou/urlshortener/internal/userctx"
 )
 
 type UserUrlsResp struct {
@@ -26,7 +26,7 @@ type UserUrlsResp struct {
 //	@Failure		500	{string}	string	"Internal server error"
 //	@Router			/api/user/urls [get]
 func (h *Handlers) UserUrls(w http.ResponseWriter, r *http.Request) {
-	userID, err := middleware.UserIDFromContext(r.Context())
+	userID, err := userctx.UserID(r.Context())
 	if err != nil {
 		h.logger.Error("failed to get userID from context")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -82,7 +82,7 @@ func (h *Handlers) UserUrls(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500	{string}	string	"Internal server error"
 //	@Router			/api/user/urls [delete]
 func (h *Handlers) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
-	userID, err := middleware.UserIDFromContext(r.Context())
+	userID, err := userctx.UserID(r.Context())
 	if err != nil {
 		h.logger.Error("failed to get userID from context")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

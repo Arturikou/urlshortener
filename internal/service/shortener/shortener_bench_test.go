@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Arturikou/urlshortener/internal/middleware"
 	"github.com/Arturikou/urlshortener/internal/models"
+	"github.com/Arturikou/urlshortener/internal/userctx"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -27,7 +27,7 @@ func BenchmarkGenerateAlias(b *testing.B) {
 
 func BenchmarkAddURL(b *testing.B) {
 	s := newBenchShortener(b)
-	ctx := context.WithValue(context.Background(), middleware.ContextKeyUserID, uuid.New())
+	ctx := userctx.WithUserID(context.Background(), uuid.New())
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
@@ -37,7 +37,7 @@ func BenchmarkAddURL(b *testing.B) {
 
 func BenchmarkGetURL(b *testing.B) {
 	s := newBenchShortener(b)
-	ctx := context.WithValue(context.Background(), middleware.ContextKeyUserID, uuid.New())
+	ctx := userctx.WithUserID(context.Background(), uuid.New())
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
@@ -47,7 +47,7 @@ func BenchmarkGetURL(b *testing.B) {
 
 func BenchmarkAddURLs(b *testing.B) {
 	svc := newBenchShortener(b)
-	ctx := context.WithValue(context.Background(), middleware.ContextKeyUserID, uuid.New())
+	ctx := userctx.WithUserID(context.Background(), uuid.New())
 
 	const batchSize = 100
 	batches := make([]models.ShortenBatch, batchSize)
