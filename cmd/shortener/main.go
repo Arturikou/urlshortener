@@ -9,7 +9,8 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
+	"os/signal"
+	"syscall"
 
 	_ "github.com/Arturikou/urlshortener/docs"
 	"github.com/Arturikou/urlshortener/internal/clients/httpaudit"
@@ -18,12 +19,11 @@ import (
 	"github.com/Arturikou/urlshortener/internal/logging"
 	"github.com/Arturikou/urlshortener/internal/managers/audit"
 	"github.com/Arturikou/urlshortener/internal/router"
+	"github.com/Arturikou/urlshortener/internal/server"
 	"github.com/Arturikou/urlshortener/internal/service/shortener"
 	"github.com/Arturikou/urlshortener/internal/storage"
 	"github.com/Arturikou/urlshortener/internal/workers/deleteworker"
-	"go.uber.org/zap"
-
-	_ "net/http/pprof"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -39,7 +39,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("can't load config: %v", err)
 	}
-	ctx := context.Background()
+
+	ctx, stop := signal.NotifyContext(context.Background(),
+		syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	defer stop()
 
 	l, err := logging.New(cfg.LogLevel)
 	if err != nil {
@@ -72,7 +75,6 @@ func main() {
 
 	urlService := shortener.New(st.URLRepo, st.UserURLRepo, st.Transactor, auditManager, sl)
 	worker := deleteworker.New(urlService, sl)
-	go worker.Run(ctx)
 
 	h := handlers.New(
 		urlService,
@@ -83,21 +85,30 @@ func main() {
 	)
 	r := router.New(h, l)
 
-	srv := &http.Server{
-		Addr:    cfg.ServerAddr,
-		Handler: r,
-	}
+	srv := server.New(cfg.Server, r, l)
 
-	go func() {
-		log.Println("pprof listening on :6060")
-		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
-			sl.Warnf("pprof server error: %v", err)
+	// Завершение по сигналу
+	g, gCtx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		worker.Run(gCtx)
+
+		return nil
+	})
+
+	g.Go(func() error {
+		if err := srv.RunPprof(gCtx); err != nil {
+			sl.Warnf("pprof server: %v", err)
 		}
-	}()
 
-	l.Info("starting server", zap.String("addr", cfg.ServerAddr))
-	if err := srv.ListenAndServe(); err != nil {
-		log.Fatalf("server stopped with error: %v", err)
+		return nil
+	})
+
+	g.Go(func() error {
+		return srv.Run(gCtx)
+	})
+
+	if err := g.Wait(); err != nil {
+		sl.Errorf("server fatal error: %v", err)
 	}
 }
 
