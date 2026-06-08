@@ -1,7 +1,6 @@
 package handlers_test
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -11,9 +10,9 @@ import (
 	"github.com/Arturikou/urlshortener/internal/config"
 	"github.com/Arturikou/urlshortener/internal/handlers"
 	"github.com/Arturikou/urlshortener/internal/handlers/mocks"
-	"github.com/Arturikou/urlshortener/internal/middleware"
 	"github.com/Arturikou/urlshortener/internal/models"
 	pinger "github.com/Arturikou/urlshortener/internal/storage/mocks"
+	"github.com/Arturikou/urlshortener/internal/userctx"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -115,7 +114,7 @@ func TestHandlers_UserUrls(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
 
 			if test.userIDInCtx {
-				ctx := context.WithValue(request.Context(), middleware.ContextKeyUserID, userID)
+				ctx := userctx.WithUserID(request.Context(), userID)
 				request = request.WithContext(ctx)
 			}
 

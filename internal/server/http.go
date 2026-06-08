@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,8 +10,6 @@ import (
 	"time"
 
 	"github.com/Arturikou/urlshortener/internal/config"
-	"github.com/Arturikou/urlshortener/internal/crypto"
-	"github.com/Arturikou/urlshortener/internal/utils"
 	"go.uber.org/zap"
 )
 
@@ -20,11 +19,12 @@ type Server struct {
 	logger     *zap.Logger
 }
 
-func New(cfg config.ServerConfig, handler http.Handler, logger *zap.Logger) *Server {
+func New(cfg config.ServerConfig, handler http.Handler, tlsConfig *tls.Config, logger *zap.Logger) *Server {
 	return &Server{
 		httpServer: &http.Server{
-			Addr:    cfg.Addr,
-			Handler: handler,
+			Addr:      cfg.Addr,
+			Handler:   handler,
+			TLSConfig: tlsConfig,
 		},
 		cfg:    cfg,
 		logger: logger,
@@ -41,21 +41,11 @@ func (s *Server) RunPprof(ctx context.Context) error {
 // Run запускает HTTP(S) сервер
 func (s *Server) Run(ctx context.Context) error {
 	serve := s.httpServer.ListenAndServe
-	if s.cfg.EnableHTTPS {
-		if !utils.FileExists(s.cfg.CertFile) || !utils.FileExists(s.cfg.KeyFile) {
-			s.logger.Info("TLS certificates not found, will be generated")
-			if err := crypto.Generate(s.cfg.CertFile, s.cfg.KeyFile); err != nil {
-				return fmt.Errorf("tls setup failed: %w", err)
-			}
-		}
-
-		s.logger.Info("starting HTTPS server",
-			zap.String("addr", s.cfg.Addr),
-			zap.String("cert", s.cfg.CertFile),
-		)
-
+	if s.httpServer.TLSConfig != nil {
+		s.logger.Info("starting HTTPS server", zap.String("addr", s.cfg.Addr))
 		serve = func() error {
-			return s.httpServer.ListenAndServeTLS(s.cfg.CertFile, s.cfg.KeyFile)
+			// сертификат и ключ берутся из TLSConfig
+			return s.httpServer.ListenAndServeTLS("", "")
 		}
 	} else {
 		s.logger.Info("starting HTTP server", zap.String("addr", s.cfg.Addr))

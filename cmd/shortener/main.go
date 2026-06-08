@@ -7,6 +7,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"os/signal"
@@ -15,9 +16,12 @@ import (
 	_ "github.com/Arturikou/urlshortener/docs"
 	"github.com/Arturikou/urlshortener/internal/clients/httpaudit"
 	"github.com/Arturikou/urlshortener/internal/config"
+	"github.com/Arturikou/urlshortener/internal/crypto"
 	"github.com/Arturikou/urlshortener/internal/handlers"
+	"github.com/Arturikou/urlshortener/internal/handlers/grpchandler"
 	"github.com/Arturikou/urlshortener/internal/logging"
 	"github.com/Arturikou/urlshortener/internal/managers/audit"
+	"github.com/Arturikou/urlshortener/internal/middleware/interceptors"
 	"github.com/Arturikou/urlshortener/internal/router"
 	"github.com/Arturikou/urlshortener/internal/server"
 	"github.com/Arturikou/urlshortener/internal/service/shortener"
@@ -75,6 +79,7 @@ func main() {
 
 	urlService := shortener.New(st.URLRepo, st.UserURLRepo, st.Transactor, auditManager, sl)
 	worker := deleteworker.New(urlService, sl)
+	grpcURLService := grpchandler.New(urlService, cfg.Handlers, sl)
 
 	h := handlers.New(
 		urlService,
@@ -85,7 +90,19 @@ func main() {
 	)
 	r := router.New(h, l, cfg.TrustedSubnet)
 
-	srv := server.New(cfg.Server, r, l)
+	var tlsConfig *tls.Config
+	if cfg.Server.EnableHTTPS {
+		tlsConfig, err = crypto.LoadTLSConfig(cfg.Server.CertFile, cfg.Server.KeyFile)
+		if err != nil {
+			log.Fatalf("tls setup failed: %v", err)
+		}
+	}
+
+	httpSrv := server.New(cfg.Server, r, tlsConfig, l)
+
+	grpcSrv := server.NewGRPC(cfg.Server, grpcURLService, tlsConfig, l,
+		interceptors.DefaultUnaryInterceptors(sl)...,
+	)
 
 	// Завершение по сигналу
 	g, gCtx := errgroup.WithContext(ctx)
@@ -96,7 +113,7 @@ func main() {
 	})
 
 	g.Go(func() error {
-		if err := srv.RunPprof(gCtx); err != nil {
+		if err := httpSrv.RunPprof(gCtx); err != nil {
 			sl.Warnf("pprof server: %v", err)
 		}
 
@@ -104,7 +121,11 @@ func main() {
 	})
 
 	g.Go(func() error {
-		return srv.Run(gCtx)
+		return httpSrv.Run(gCtx)
+	})
+
+	g.Go(func() error {
+		return grpcSrv.Run(gCtx)
 	})
 
 	if err := g.Wait(); err != nil {

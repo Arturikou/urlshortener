@@ -9,14 +9,14 @@ import (
 )
 
 func (s *Shortener) GetStats(ctx context.Context) (models.Stats, error) {
-	g, gCTX := errgroup.WithContext(ctx)
+	g, gCtx := errgroup.WithContext(ctx)
 
 	var usersCount int64
 	var urlsCount int64
 
 	g.Go(func() error {
 		var err error
-		usersCount, err = s.userURLRepo.CountUsers(gCTX)
+		usersCount, err = s.userURLRepo.CountUsers(gCtx)
 		if err != nil {
 			return fmt.Errorf("can't get users count: %w", err)
 		}
@@ -26,7 +26,7 @@ func (s *Shortener) GetStats(ctx context.Context) (models.Stats, error) {
 
 	g.Go(func() error {
 		var err error
-		urlsCount, err = s.urlRepo.CountUrls(gCTX)
+		urlsCount, err = s.urlRepo.CountUrls(gCtx)
 		if err != nil {
 			return fmt.Errorf("can't get urls count: %w", err)
 		}

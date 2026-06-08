@@ -23,10 +23,10 @@ func (h *Handlers) GetStats(w http.ResponseWriter, r *http.Request) {
 		Users: stats.UserCount,
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		h.logger.Errorw("error encoding response", "error", err)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 }
