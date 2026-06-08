@@ -1,20 +1,12 @@
 package middleware
 
 import (
-	"context"
-	"errors"
 	"net/http"
 
 	"github.com/Arturikou/urlshortener/internal/auth"
+	"github.com/Arturikou/urlshortener/internal/userctx"
 	"github.com/google/uuid"
 )
-
-var ErrContextKeyNotFound = errors.New("key not found in context")
-var ErrContextValueWrongType = errors.New("context value has unexpected type")
-
-type ContextKey string
-
-const ContextKeyUserID ContextKey = "userID"
 
 func OptionalAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -25,8 +17,7 @@ func OptionalAuth(next http.Handler) http.Handler {
 		if err == nil {
 			userID, err = auth.GetUserID(authCookie.Value)
 			if err == nil {
-				ctx := context.WithValue(r.Context(), ContextKeyUserID, userID)
-				next.ServeHTTP(w, r.WithContext(ctx))
+				next.ServeHTTP(w, r.WithContext(userctx.WithUserID(r.Context(), userID)))
 				return
 			}
 		}
@@ -41,8 +32,7 @@ func OptionalAuth(next http.Handler) http.Handler {
 			})
 		}
 
-		ctx := context.WithValue(r.Context(), ContextKeyUserID, userID)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r.WithContext(userctx.WithUserID(r.Context(), userID)))
 	})
 }
 
@@ -57,8 +47,7 @@ func RequireAuth(next http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), ContextKeyUserID, userID)
-			next.ServeHTTP(w, r.WithContext(ctx))
+			next.ServeHTTP(w, r.WithContext(userctx.WithUserID(r.Context(), userID)))
 			return
 		}
 
@@ -72,21 +61,6 @@ func RequireAuth(next http.Handler) http.Handler {
 			})
 		}
 
-		ctx := context.WithValue(r.Context(), ContextKeyUserID, userID)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r.WithContext(userctx.WithUserID(r.Context(), userID)))
 	})
-}
-
-func UserIDFromContext(ctx context.Context) (uuid.UUID, error) {
-	val := ctx.Value(ContextKeyUserID)
-	if val == nil {
-		return uuid.Nil, ErrContextKeyNotFound
-	}
-
-	id, ok := val.(uuid.UUID)
-	if !ok {
-		return uuid.Nil, ErrContextValueWrongType
-	}
-
-	return id, nil
 }

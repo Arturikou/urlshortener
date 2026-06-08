@@ -17,6 +17,7 @@ type URLService interface {
 	GetURL(ctx context.Context, alias string) (string, error)
 	AddURLs(ctx context.Context, shortenBatch []models.ShortenBatch) ([]models.ShortenBatch, error)
 	GetUserURLs(ctx context.Context, userID uuid.UUID) ([]models.UserUrls, error)
+	GetStats(ctx context.Context) (models.Stats, error)
 }
 
 //go:generate mockery

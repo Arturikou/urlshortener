@@ -60,3 +60,15 @@ func (db *DB) GetUserURLs(ctx context.Context, userID uuid.UUID) ([]models.UserU
 
 	return urls, nil
 }
+
+func (db *DB) CountUsers(ctx context.Context) (int64, error) {
+	q := `SELECT COUNT(DISTINCT user_id) FROM user_urls`
+
+	var cnt int64
+	err := db.QueryRow(ctx, q).Scan(&cnt)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count users: %w", err)
+	}
+
+	return cnt, nil
+}

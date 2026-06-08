@@ -19,10 +19,12 @@ type Config struct {
 	Handlers        HandlersConfig
 	Database        DatabaseConfig
 	Audit           AuditConfig
+	TrustedSubnet   string `env:"TRUSTED_SUBNET"`
 }
 
 type ServerConfig struct {
 	Addr            string        `env:"SERVER_ADDRESS"`
+	GRPCAddr        string        `env:"GRPC_ADDRESS"`
 	PprofAddr       string        `env:"PPROF_ADDRESS" env-default:"localhost:6060"`
 	EnableHTTPS     bool          `env:"ENABLE_HTTPS"`
 	CertFile        string        `env:"CERT_FILE" env-default:"cert.pem"`
@@ -49,6 +51,8 @@ type jsonConfig struct {
 	FileStoragePath string `json:"file_storage_path"`
 	DatabaseDSN     string `json:"database_dsn"`
 	EnableHTTPS     bool   `json:"enable_https"`
+	TrustedSubnet   string `json:"trusted_subnet"`
+	GRPCAddress     string `json:"grpc_address"`
 }
 
 // Load priority: ENV > flags > JSON > defaults
@@ -66,6 +70,10 @@ func Load() (*Config, error) {
 	// Defaults:
 	if cfg.Server.Addr == "" {
 		cfg.Server.Addr = "localhost:8080"
+	}
+
+	if cfg.Server.GRPCAddr == "" {
+		cfg.Server.GRPCAddr = "localhost:3200"
 	}
 
 	if cfg.Handlers.BaseAddr == "" {
@@ -96,6 +104,8 @@ func parseFlags() *Config {
 	flag.StringVar(&cfg.Audit.AuditURL, "audit-url", "", "AuditConfig URL")
 	flag.StringVar(&cfg.ConfigPath, "c", "", "json config file path")
 	flag.StringVar(&cfg.ConfigPath, "config", "", "json config file path")
+	flag.StringVar(&cfg.TrustedSubnet, "t", "", "trusted subnet CIDR")
+	flag.StringVar(&cfg.Server.GRPCAddr, "g", "", "The address to listen on for gRPC requests.")
 	flag.Parse()
 
 	return cfg
@@ -135,6 +145,14 @@ func applyJSONConfig(cfg *Config) error {
 
 	if j.EnableHTTPS {
 		cfg.Server.EnableHTTPS = true
+	}
+
+	if cfg.TrustedSubnet == "" {
+		cfg.TrustedSubnet = j.TrustedSubnet
+	}
+
+	if cfg.Server.GRPCAddr == "" {
+		cfg.Server.GRPCAddr = j.GRPCAddress
 	}
 
 	return nil
