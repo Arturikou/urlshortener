@@ -7,6 +7,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"os/signal"
@@ -15,11 +16,12 @@ import (
 	_ "github.com/Arturikou/urlshortener/docs"
 	"github.com/Arturikou/urlshortener/internal/clients/httpaudit"
 	"github.com/Arturikou/urlshortener/internal/config"
+	"github.com/Arturikou/urlshortener/internal/crypto"
 	"github.com/Arturikou/urlshortener/internal/handlers"
-	"github.com/Arturikou/urlshortener/internal/handlers/grpc"
+	"github.com/Arturikou/urlshortener/internal/handlers/grpchandler"
 	"github.com/Arturikou/urlshortener/internal/logging"
 	"github.com/Arturikou/urlshortener/internal/managers/audit"
-	grpc2 "github.com/Arturikou/urlshortener/internal/middleware/grpc"
+	"github.com/Arturikou/urlshortener/internal/middleware/interceptors"
 	"github.com/Arturikou/urlshortener/internal/router"
 	"github.com/Arturikou/urlshortener/internal/server"
 	"github.com/Arturikou/urlshortener/internal/service/shortener"
@@ -77,7 +79,7 @@ func main() {
 
 	urlService := shortener.New(st.URLRepo, st.UserURLRepo, st.Transactor, auditManager, sl)
 	worker := deleteworker.New(urlService, sl)
-	grpcURLService := grpc.New(urlService, cfg.Handlers, sl)
+	grpcURLService := grpchandler.New(urlService, cfg.Handlers, sl)
 
 	h := handlers.New(
 		urlService,
@@ -88,13 +90,18 @@ func main() {
 	)
 	r := router.New(h, l, cfg.TrustedSubnet)
 
-	httpSrv := server.New(cfg.Server, r, l)
+	var tlsConfig *tls.Config
+	if cfg.Server.EnableHTTPS {
+		tlsConfig, err = crypto.LoadTLSConfig(cfg.Server.CertFile, cfg.Server.KeyFile)
+		if err != nil {
+			log.Fatalf("tls setup failed: %v", err)
+		}
+	}
 
-	authInterceptor := grpc2.NewAuthInterceptor(sl)
-	loggingInterceptor := grpc2.NewLoggingInterceptor(sl)
-	grpcSrv := server.NewGRPC(cfg.Server, grpcURLService, l,
-		loggingInterceptor.UnaryServerInterceptor(),
-		authInterceptor.UnaryServerInterceptor(),
+	httpSrv := server.New(cfg.Server, r, tlsConfig, l)
+
+	grpcSrv := server.NewGRPC(cfg.Server, grpcURLService, tlsConfig, l,
+		interceptors.DefaultUnaryInterceptors(sl)...,
 	)
 
 	// Завершение по сигналу

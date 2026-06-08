@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/Arturikou/urlshortener/internal/config"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type GRPCServer struct {
@@ -20,10 +22,16 @@ type GRPCServer struct {
 func NewGRPC(
 	cfg config.ServerConfig,
 	service pb.ShortenerServiceServer,
+	tlsConfig *tls.Config,
 	logger *zap.Logger,
 	interceptors ...grpc.UnaryServerInterceptor,
 ) *GRPCServer {
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(interceptors...))
+	opts := []grpc.ServerOption{grpc.ChainUnaryInterceptor(interceptors...)}
+	if tlsConfig != nil {
+		opts = append(opts, grpc.Creds(credentials.NewTLS(tlsConfig)))
+	}
+
+	grpcServer := grpc.NewServer(opts...)
 	pb.RegisterShortenerServiceServer(grpcServer, service)
 
 	return &GRPCServer{
